@@ -1,0 +1,45 @@
+---
+import { getCollection, render } from 'astro:content';
+import PostLayout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true));
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+// 阅读时长：中文按字数计，约 400 字/分钟
+const body = post.body ?? '';
+const minutes = Math.max(1, Math.round(body.replace(/\s/g, '').length / 400));
+
+// 键盘导航（全站时间线顺序）
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const chrono = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.date.valueOf() - b.data.date.valueOf()
+);
+const ci = chrono.findIndex((p) => p.id === post.id);
+const kbNav = {
+  prev: ci > 0 ? `${B}/posts/${chrono[ci - 1].id}` : undefined,
+  next: ci < chrono.length - 1 ? `${B}/posts/${chrono[ci + 1].id}` : undefined,
+};
+
+// 系列上下篇
+let seriesNav;
+if (post.data.series) {
+  const siblings = (await getCollection('posts', ({ data }) => !data.draft && data.series === post.data.series))
+    .sort((a, b) => (a.data.seriesIndex ?? 0) - (b.data.seriesIndex ?? 0) || a.data.date.valueOf() - b.data.date.valueOf());
+  const idx = siblings.findIndex((p) => p.id === post.id);
+  const prev = idx > 0 ? siblings[idx - 1] : undefined;
+  const next = idx < siblings.length - 1 ? siblings[idx + 1] : undefined;
+  seriesNav = {
+    prev: prev ? { href: `${B}/posts/${prev.id}`, title: prev.data.title } : undefined,
+    next: next ? { href: `${B}/posts/${next.id}`, title: next.data.title } : undefined,
+  };
+}
+---
+
+<PostLayout post={post} headings={headings} readingMinutes={minutes} seriesNav={seriesNav} kbNav={kbNav}>
+  <Content />
+</PostLayout>

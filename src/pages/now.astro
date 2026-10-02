@@ -1,11 +1,84 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const entry = (await getCollection('now'))[0];
+const d = entry?.data ?? { playing: [], watching: [], listening: [] };
+const cols = [
+  { title: '🎮 在玩', items: d.playing },
+  { title: '📺 在看', items: d.watching },
+  { title: '🎧 在听', items: d.listening },
+];
 ---
 
-<BaseLayout title="施工中">
-  <section class="container" style="padding-block: 100px; text-align: center;">
-    <h1>🎮 Now 施工中</h1>
-    <p>「最近在玩什么」整理中。</p>
-    <p><a href={import.meta.env.BASE_URL}>← 回首页</a></p>
+<BaseLayout title="Now" description="枫最近在玩、在看、在听什么">
+  <section class="container">
+    <h1 class="page-title">🌊 Now</h1>
+    <p class="sub">最近的状态——水面的波纹，更新不算准时。</p>
+
+    <div class="cols">
+      {
+        cols.map((c) => (
+          <section class="col">
+            <h2>{c.title}</h2>
+            <ul>
+              {c.items.length > 0 ? (
+                c.items.map((item) => <li>{item}</li>)
+              ) : (
+                <li class="empty">暂时空着，猫在休息</li>
+              )}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="note">更新不算准时——猫睡着的时候，这个页面就是静止的。</p>
   </section>
 </BaseLayout>
+
+<style>
+  .container {
+    padding-block: 44px 20px;
+    max-width: 860px;
+  }
+  .page-title {
+    font-size: 1.7rem;
+  }
+  .sub {
+    color: var(--muted);
+    margin: 8px 0 28px;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .col {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+  }
+  .col h2 {
+    font-size: 1.05rem;
+    color: var(--accent);
+  }
+  .col ul {
+    margin: 12px 0 0;
+    padding-left: 1.2em;
+    display: grid;
+    gap: 6px;
+    font-size: 0.94rem;
+  }
+  .empty {
+    color: var(--muted);
+    list-style: none;
+    margin-left: -1.2em;
+  }
+  .note {
+    margin-top: 34px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+</style>

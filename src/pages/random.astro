@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const posts = await getCollection('posts', ({ data }) => !data.draft);
+const urls = posts.map((p) => `${B}/posts/${p.id}`);
+---
+
+<BaseLayout title="随机一页">
+  <section class="container" style="padding-block: 100px; text-align: center;">
+    <h1>🎲 猫咪正在帮你翻页…</h1>
+    <noscript>
+      <p>浏览器未启用 JavaScript，<a href={`${B}/posts`}>去文章列表挑一篇吧</a>。</p>
+    </noscript>
+  </section>
+  <script define:vars={{ urls }}>
+    if (urls.length > 0) {
+      location.replace(urls[Math.floor(Math.random() * urls.length)]);
+    } else {
+      location.replace('${B}');
+    }
+  </script>
+</BaseLayout>

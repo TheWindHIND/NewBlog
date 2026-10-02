@@ -3,7 +3,7 @@ import '../styles/tokens.css';
 import '../styles/base.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE } from '../consts';
+import { SITE, ACHIEVEMENTS } from '../consts';
 
 interface Props {
   title?: string;
@@ -18,7 +18,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-theme="pneuma">
+<html lang="zh-CN" data-theme="pneuma" data-base={B}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -58,5 +58,86 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       <slot />
     </main>
     <Footer />
+
+    <!-- 成就解锁 toast -->
+    <script is:inline type="application/json" set:html={JSON.stringify(ACHIEVEMENTS)} data-ach-data />
+    <div class="ach-toast" data-toast hidden>
+      <span class="ach-icon" data-toast-icon></span>
+      <div>
+        <strong data-toast-name></strong>
+        <p data-toast-desc></p>
+      </div>
+    </div>
+
+    <style>
+      .ach-toast {
+        position: fixed;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 10px 22px 10px 14px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        transition: opacity 0.4s, transform 0.4s var(--ease-water);
+      }
+      .ach-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .ach-icon {
+        font-size: 1.5rem;
+      }
+      .ach-toast strong {
+        font-size: 0.9rem;
+        color: var(--accent-2);
+      }
+      .ach-toast p {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0;
+      }
+    </style>
+
+    <script>
+      // 成就 toast 监听
+      const data = JSON.parse(
+        (document.querySelector('[data-ach-data]') as HTMLScriptElement)?.textContent ?? '[]'
+      ) as { id: string; name: string; desc: string; icon: string }[];
+      const toast = document.querySelector('[data-toast]');
+      let hideTimer: ReturnType<typeof setTimeout> | undefined;
+      window.addEventListener('catnest:achievement', (e) => {
+        const id = (e as CustomEvent).detail?.id;
+        const ach = data.find((a) => a.id === id);
+        if (!ach || !toast) return;
+        (toast.querySelector('[data-toast-icon]') as HTMLElement).textContent = ach.icon;
+        (toast.querySelector('[data-toast-name]') as HTMLElement).textContent = `成就解锁 · ${ach.name}`;
+        (toast.querySelector('[data-toast-desc]') as HTMLElement).textContent = ach.desc;
+        toast.hidden = false;
+        toast.classList.add('show');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+      });
+
+      // 键盘导航：j 下一篇 / k 上一篇 / r 随机一页
+      const B = document.documentElement.getAttribute('data-base') || '';
+      document.addEventListener('keydown', (e) => {
+        const t = e.target as HTMLElement;
+        if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || e.isComposing) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const prev = document.querySelector<HTMLAnchorElement>('[data-kb-prev]');
+        const next = document.querySelector<HTMLAnchorElement>('[data-kb-next]');
+        if (e.key === 'j' && next) next.click();
+        else if (e.key === 'k' && prev) prev.click();
+        else if (e.key === 'r') location.href = `${B}/random`;
+      });
+    </script>
   </body>
 </html>

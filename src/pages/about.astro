@@ -1,11 +1,150 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES } from '../consts';
 ---
 
-<BaseLayout title="施工中">
-  <section class="container" style="padding-block: 100px; text-align: center;">
-    <h1>🐾 关于施工中</h1>
-    <p>猫的自我介绍撰写中。</p>
-    <p><a href={import.meta.env.BASE_URL}>← 回首页</a></p>
+<BaseLayout title="关于" description={`关于${SITE.title}与${SITE.author}`}>
+  <section class="container">
+    <h1 class="page-title">🐾 关于这个猫窝</h1>
+
+    <div class="intro">
+      <p>
+        你好，我是<strong>{SITE.author}</strong>。「藏枫」——把枫藏起来的地方，就是猫窝。
+      </p>
+      <p>
+        这里是我的个人博客：写折腾记录、思考和日常。设计灵感来自枫丹的水色与舞台，
+        所以你会看到泡泡、星空和一只怎么都睡不够的猫。
+      </p>
+      <p>
+        网站基于 Astro 构建，托管在 GitHub Pages；除了字体以外没有任何外部依赖，
+        希望它在任何网络下都能快快打开。
+      </p>
+    </div>
+
+    <h2 class="sec">🐱 猫窝养成</h2>
+    <p class="sec-sub">你每来一次，猫窝都会更热闹一点（数据只存在你自己的浏览器里）：</p>
+    <ol class="stages">
+      {
+        CAT_NEST_STAGES.map((s) => (
+          <li>
+            <strong>{s.name}</strong>
+            <span class="min">{s.min} 次</span>
+            <p>{s.desc}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <h2 class="sec">🏆 成就徽章</h2>
+    <p class="sec-sub">逛猫窝的过程中会解锁一些小成就：</p>
+    <div class="badges" data-badges>
+      {
+        ACHIEVEMENTS.map((a) => (
+          <div class="badge" data-ach-id={a.id}>
+            <span class="icon">{a.icon}</span>
+            <strong>{a.name}</strong>
+            <p>{a.desc}</p>
+          </div>
+        ))
+      }
+    </div>
   </section>
 </BaseLayout>
+
+<style>
+  .container {
+    padding-block: 44px 20px;
+    max-width: 860px;
+  }
+  .page-title {
+    font-size: 1.7rem;
+  }
+  .intro {
+    margin-top: 20px;
+    display: grid;
+    gap: 10px;
+    font-size: 1.02rem;
+  }
+  .sec {
+    margin-top: 44px;
+    font-size: 1.25rem;
+  }
+  .sec-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  .stages {
+    margin-top: 16px;
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .stages li {
+    padding: 12px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .stages .min {
+    font-size: 0.76rem;
+    color: var(--accent-2);
+    background: var(--accent-2-soft);
+    padding: 1px 9px;
+    border-radius: 999px;
+  }
+  .stages p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  .badges {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .badge {
+    padding: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    text-align: center;
+    transition: transform 0.3s var(--ease-water), border-color 0.3s, opacity 0.3s, filter 0.3s;
+  }
+  .badge .icon {
+    font-size: 1.8rem;
+  }
+  .badge strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--accent);
+    font-size: 0.94rem;
+  }
+  .badge p {
+    margin-top: 4px;
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  /* 未解锁：灰暗 */
+  .badge.locked {
+    opacity: 0.38;
+    filter: grayscale(1);
+  }
+  .badge:not(.locked):hover {
+    transform: translateY(-4px);
+    border-color: var(--border-strong);
+  }
+</style>
+
+<script>
+  import { catnest } from '../scripts/catnest';
+  const got = new Set(catnest.achievements());
+  document.querySelectorAll<HTMLElement>('[data-ach-id]').forEach((el) => {
+    if (!got.has(el.dataset.achId ?? '')) el.classList.add('locked');
+  });
+</script>

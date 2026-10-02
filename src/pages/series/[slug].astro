@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft && !!data.series);
+  const seriesNames = [...new Set(posts.map((p) => p.data.series!))];
+  return seriesNames.map((name) => ({
+    params: { slug: name },
+    props: {
+      episodes: posts
+        .filter((p) => p.data.series === name)
+        .sort((a, b) => (a.data.seriesIndex ?? 0) - (b.data.seriesIndex ?? 0) || a.data.date.valueOf() - b.data.date.valueOf()),
+    },
+  }));
+}
+
+const { slug } = Astro.params;
+const { episodes } = Astro.props;
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<BaseLayout title={`系列 · ${slug}`} description={`系列文章「${slug}」的连载目录`}>
+  <section class="container">
+    <p class="crumb"><a href={`${B}/posts`}>← 全部文章</a></p>
+    <h1 class="page-title">📖 {slug}</h1>
+    <p class="sub">连载目录 · 共 {episodes.length} 篇</p>
+
+    <ol class="episodes">
+      {
+        episodes.map((p, i) => (
+          <li>
+            <a href={`${B}/posts/${p.id}`}>
+              <span class="num">{String(p.data.seriesIndex ?? i + 1).padStart(2, '0')}</span>
+              <span class="info">
+                <strong>{p.data.title}</strong>
+                <time>{p.data.date.getFullYear()}-{String(p.data.date.getMonth() + 1).padStart(2, '0')}-{String(p.data.date.getDate()).padStart(2, '0')}</time>
+              </span>
+              <span class="arrow">→</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</BaseLayout>
+
+<style>
+  .container {
+    padding-block: 44px 20px;
+    max-width: 760px;
+  }
+  .crumb {
+    font-size: 0.9rem;
+  }
+  .page-title {
+    margin-top: 10px;
+    font-size: 1.7rem;
+  }
+  .sub {
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .episodes {
+    margin-top: 26px;
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .episodes a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    transition: transform 0.25s var(--ease-water), border-color 0.25s;
+  }
+  .episodes a:hover {
+    transform: translateX(6px);
+    border-color: var(--border-strong);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    color: var(--accent);
+    opacity: 0.85;
+  }
+  .info {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .info strong {
+    color: var(--text-strong);
+    font-weight: 600;
+  }
+  time {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .arrow {
+    margin-left: auto;
+    color: var(--muted);
+    transition: transform 0.25s;
+  }
+  .episodes a:hover .arrow {
+    transform: translateX(4px);
+    color: var(--accent);
+  }
+</style>

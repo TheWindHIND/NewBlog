@@ -1,0 +1,85 @@
+---
+/** 猫尾阅读进度条：滚动越深，尾巴翘得越长，尾尖是一枚猫爪 */
+---
+
+<div class="cat-tail" data-cat-tail aria-hidden="true">
+  <svg preserveAspectRatio="none" viewBox="0 0 1000 24">
+    <path
+      data-tail-path
+      d="M0 16 Q 120 6 240 14 T 480 12 T 720 14 T 960 10"
+      fill="none"
+      stroke="var(--accent)"
+      stroke-width="5"
+      stroke-linecap="round"
+      pathLength="100"
+    />
+  </svg>
+  <svg class="paw" data-tail-paw viewBox="0 0 24 24">
+    <g fill="var(--accent-2)">
+      <ellipse cx="12" cy="15" rx="7" ry="5.5" />
+      <circle cx="4.5" cy="8" r="2.6" />
+      <circle cx="9.5" cy="5.5" r="2.6" />
+      <circle cx="14.5" cy="5.5" r="2.6" />
+      <circle cx="19.5" cy="8" r="2.6" />
+    </g>
+  </svg>
+</div>
+
+<style>
+  .cat-tail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 24px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .cat-tail.visible {
+    opacity: 1;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+  .paw {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  }
+</style>
+
+<script>
+  const wrap = document.querySelector<HTMLElement>('[data-cat-tail]');
+  const path = document.querySelector<SVGPathElement>('[data-tail-path]');
+  const paw = document.querySelector<SVGSVGElement>('[data-tail-paw]');
+  if (wrap && path && paw) {
+    const total = path.getTotalLength();
+    path.style.strokeDasharray = '100';
+    let ticking = false;
+    const update = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - innerHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+      wrap.classList.toggle('visible', p > 0.02);
+      path.style.strokeDashoffset = String(100 - p * 100);
+      // 爪子跟随尾巴尖端（getPointAtLength 按真实用户单位计算，与 pathLength 归一化无关）
+      const point = path.getPointAtLength(p * path.getTotalLength());
+      paw.style.left = `calc(${(point.x / 1000) * 100}% - 9px)`;
+      paw.style.top = `${point.y - 7}px`;
+      ticking = false;
+    };
+    addEventListener('scroll', () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }, { passive: true });
+    update();
+  }
+</script>

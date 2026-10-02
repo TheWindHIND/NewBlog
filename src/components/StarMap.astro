@@ -1,0 +1,303 @@
+---
+/** 星空猫座：每篇文章一颗星，按年份聚成星座，可拖拽缩放，点击跳转 */
+export interface Star {
+  id: string;
+  title: string;
+  year: number;
+  dateISO: string;
+  url: string;
+}
+interface Props {
+  stars: Star[];
+}
+const { stars } = Astro.props;
+---
+
+<div class="starmap" data-starmap>
+  <canvas data-canvas></canvas>
+  <div class="tooltip" data-tooltip hidden>
+    <strong data-tip-title></strong>
+    <time data-tip-date></time>
+  </div>
+  <p class="hint">🖱 拖拽平移 · 滚轮缩放 · 点击星星跳转</p>
+</div>
+
+<style>
+  .starmap {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-soft);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 540px;
+    cursor: grab;
+    touch-action: none;
+  }
+  canvas.dragging {
+    cursor: grabbing;
+  }
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-shadow: var(--shadow);
+    max-width: 240px;
+    transform: translate(-50%, calc(-100% - 14px));
+    backdrop-filter: blur(8px);
+  }
+  .tooltip strong {
+    display: block;
+    font-size: 0.86rem;
+    color: var(--text-strong);
+    line-height: 1.4;
+  }
+  .tooltip time {
+    font-size: 0.74rem;
+    color: var(--muted);
+  }
+  .hint {
+    position: absolute;
+    right: 14px;
+    bottom: 10px;
+    font-size: 0.74rem;
+    color: var(--muted);
+    opacity: 0.75;
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    canvas {
+      height: 420px;
+    }
+  }
+</style>
+
+<script define:vars={{ stars }}>
+  const wrap = document.querySelector('[data-starmap]');
+  const canvas = wrap.querySelector('[data-canvas]');
+  const tooltip = wrap.querySelector('[data-tooltip]');
+  const tipTitle = wrap.querySelector('[data-tip-title]');
+  const tipDate = wrap.querySelector('[data-tip-date]');
+  const ctx = canvas.getContext('2d');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 主题感知配色（荒 = 夜色浅星，芒 = 昼色深星） */
+  const PALETTES = {
+    ousia: { star: '#7fd0ee', gold: '#e8c87a', line: 'rgba(140,190,230,0.28)', yearLine: 'rgba(140,180,220,0.14)', label: 'rgba(180,200,225,0.65)' },
+    pneuma: { star: '#2b8fbe', gold: '#c29338', line: 'rgba(63,130,170,0.35)', yearLine: 'rgba(63,110,160,0.18)', label: 'rgba(90,105,130,0.75)' },
+  };
+  let pal = PALETTES[document.documentElement.dataset.theme === 'ousia' ? 'ousia' : 'pneuma'];
+  new MutationObserver(() => {
+    pal = PALETTES[document.documentElement.dataset.theme === 'ousia' ? 'ousia' : 'pneuma'];
+    if (reduced) draw(0);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---- 世界坐标布局：按年份聚成星座 ---- */
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0;
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const years = [...new Set(stars.map((s) => s.year))].sort((a, b) => a - b);
+  const world = { w: Math.max(1100, years.length * 360), h: 520 };
+  const nodes = [];
+  const yearCenters = [];
+
+  years.forEach((year, yi) => {
+    const list = stars
+      .filter((s) => s.year === year)
+      .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+    const cx = world.w / (years.length + 1) * (yi + 1);
+    const cy = world.h / 2 - 20;
+    const rand = mulberry32(year * 7919);
+    const R = Math.min(150, 46 + list.length * 11);
+    yearCenters.push({ x: cx, y: cy, year });
+    list.forEach((s, i) => {
+      const ang = rand() * Math.PI * 2;
+      const r = R * (0.3 + 0.7 * rand());
+      nodes.push({
+        ...s,
+        x: cx + Math.cos(ang) * r * 1.35,
+        y: cy + Math.sin(ang) * r * 0.72,
+        size: 2.4 + rand() * 2.2 + (i === 0 ? 1.2 : 0),
+        ph: rand() * Math.PI * 2,
+        tw: 0.6 + rand() * 1.4,
+      });
+    });
+  });
+
+  /* ---- 视图变换 ---- */
+  const view = { x: 0, y: 0, s: 1 };
+  function fitView() {
+    view.s = Math.min(1, canvas.clientWidth / world.w);
+    view.x = (canvas.clientWidth - world.w * view.s) / 2;
+    view.y = (canvas.clientHeight - world.h * view.s) / 2;
+  }
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fitView();
+    if (reduced) draw(0);
+  }
+
+  /* ---- 绘制 ---- */
+  let t = 0;
+  let hover = null;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.save();
+    ctx.translate(view.x, view.y);
+    ctx.scale(view.s, view.s);
+
+    // 年份中心连线（弱）
+    if (yearCenters.length > 1) {
+      ctx.beginPath();
+      yearCenters.forEach((c, i) => (i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y)));
+      ctx.strokeStyle = pal.yearLine;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // 星座内连线（按发文顺序）
+    years.forEach((year) => {
+      const ns = nodes.filter((n) => n.year === year);
+      ctx.beginPath();
+      ns.forEach((n, i) => (i === 0 ? ctx.moveTo(n.x, n.y) : ctx.lineTo(n.x, n.y)));
+      ctx.strokeStyle = pal.line;
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+    });
+
+    // 星星
+    for (const n of nodes) {
+      const alpha = reduced ? 0.9 : 0.55 + 0.45 * Math.sin(t * n.tw + n.ph);
+      const gold = n === hover;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.size + (gold ? 1.5 : 0), 0, Math.PI * 2);
+      ctx.fillStyle = gold ? pal.gold : pal.star;
+      ctx.shadowColor = gold ? 'rgba(232,200,122,0.9)' : 'rgba(95,192,232,0.8)';
+      ctx.shadowBlur = 8 + (gold ? 8 : 0);
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
+    // 年份标签
+    ctx.fillStyle = pal.label;
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    for (const c of yearCenters) {
+      ctx.fillText(`${c.year} · ${nodes.filter((n) => n.year === c.year).length} 篇`, c.x, c.y + 170);
+    }
+    ctx.restore();
+  }
+
+  function loop() {
+    t += 0.016;
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---- 交互 ---- */
+  function toWorld(mx, my) {
+    return { x: (mx - view.x) / view.s, y: (my - view.y) / view.s };
+  }
+  function starAt(mx, my) {
+    const p = toWorld(mx, my);
+    let best = null;
+    let bestD = 18 / view.s;
+    for (const n of nodes) {
+      const d = Math.hypot(n.x - p.x, n.y - p.y);
+      if (d < bestD) {
+        bestD = d;
+        best = n;
+      }
+    }
+    return best;
+  }
+
+  let dragging = false;
+  let moved = 0;
+  let last = null;
+
+  canvas.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    moved = 0;
+    last = { x: e.offsetX, y: e.offsetY };
+    canvas.classList.add('dragging');
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (dragging && last) {
+      const dx = e.offsetX - last.x;
+      const dy = e.offsetY - last.y;
+      moved += Math.abs(dx) + Math.abs(dy);
+      view.x += dx;
+      view.y += dy;
+      last = { x: e.offsetX, y: e.offsetY };
+      if (reduced) draw(0);
+    } else {
+      hover = starAt(e.offsetX, e.offsetY);
+      canvas.style.cursor = hover ? 'pointer' : 'grab';
+      if (hover) {
+        tipTitle.textContent = hover.title;
+        tipDate.textContent = hover.dateISO;
+        tooltip.hidden = false;
+        tooltip.style.left = hover.x * view.s + view.x + 'px';
+        tooltip.style.top = hover.y * view.s + view.y + 'px';
+      } else {
+        tooltip.hidden = true;
+      }
+      if (reduced) draw(0);
+    }
+  });
+  canvas.addEventListener('pointerup', (e) => {
+    dragging = false;
+    canvas.classList.remove('dragging');
+    if (moved < 6) {
+      const s = starAt(e.offsetX, e.offsetY);
+      if (s) location.href = s.url;
+    }
+  });
+  canvas.addEventListener('pointerleave', () => {
+    hover = null;
+    tooltip.hidden = true;
+  });
+  canvas.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.9;
+      const ns = Math.min(2.4, Math.max(0.4, view.s * factor));
+      // 以鼠标位置为中心缩放
+      view.x = e.offsetX - ((e.offsetX - view.x) * ns) / view.s;
+      view.y = e.offsetY - ((e.offsetY - view.y) * ns) / view.s;
+      view.s = ns;
+      if (reduced) draw(0);
+    },
+    { passive: false }
+  );
+  addEventListener('resize', resize, { passive: true });
+
+  resize();
+  if (!reduced) {
+    requestAnimationFrame(loop);
+  } else {
+    draw(0);
+  }
+</script>

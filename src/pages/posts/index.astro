@@ -1,11 +1,65 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) {
+  const y = p.data.date.getFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(p);
+}
 ---
 
-<BaseLayout title="施工中">
-  <section class="container" style="padding-block: 100px; text-align: center;">
-    <h1>🚧 这个页面还在猫窝施工中</h1>
-    <p>「文章列表」即将就位，请期待。</p>
-    <p><a href={import.meta.env.BASE_URL}>← 回首页</a></p>
+<BaseLayout title="文章" description="藏枫的猫窝的全部文章，按年份归档。">
+  <section class="container">
+    <h1 class="page-title">文章 <span class="count">共 {posts.length} 篇</span></h1>
+
+    {
+      [...byYear.entries()].map(([year, list]) => (
+        <section class="year-group">
+          <h2 class="year">{year}</h2>
+          <div class="grid">
+            {list.map((post) => (
+              <PostCard post={post} />
+            ))}
+          </div>
+        </section>
+      ))
+    }
   </section>
 </BaseLayout>
+
+<style>
+  .container {
+    padding-block: 44px 20px;
+  }
+  .page-title {
+    font-size: 1.7rem;
+  }
+  .count {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 10px;
+  }
+  .year-group {
+    margin-top: 36px;
+  }
+  .year {
+    font-size: 1.2rem;
+    color: var(--accent);
+    font-family: var(--font-hand);
+    letter-spacing: 0.2em;
+  }
+  .grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+</style>

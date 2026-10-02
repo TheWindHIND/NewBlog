@@ -1,0 +1,109 @@
+---
+/** 投喂猫粮：每篇文章独立计数，猫粮粒飞向页脚的猫 */
+interface Props {
+  slug: string;
+}
+const { slug } = Astro.props;
+---
+
+<button class="feed" type="button" data-feed data-slug={slug} title="给这只猫投喂猫粮">
+  <span class="icon">🥫</span>
+  <span class="label">投喂猫粮</span>
+  <span class="count">被投喂 <b data-feed-count>0</b> 罐</span>
+</button>
+
+<style>
+  .feed {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 0.92rem;
+    transition: transform 0.25s var(--ease-water), box-shadow 0.25s, border-color 0.25s;
+  }
+  .feed:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px var(--accent-soft);
+  }
+  .feed:active {
+    transform: scale(0.96);
+  }
+  .icon {
+    font-size: 1.15rem;
+  }
+  .count {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .count b {
+    color: var(--accent-2);
+  }
+  /* 飞行的猫粮粒 */
+  .flying {
+    position: fixed;
+    z-index: 200;
+    pointer-events: none;
+    font-size: 1.1rem;
+  }
+</style>
+
+<script>
+  import { catnest } from '../scripts/catnest';
+
+  const btn = document.querySelector<HTMLButtonElement>('[data-feed]');
+  if (btn) {
+    const slug = btn.dataset.slug ?? '';
+    const countEl = btn.querySelector<HTMLElement>('[data-feed-count]');
+    const render = () => {
+      if (countEl) countEl.textContent = String(catnest.getFeed(slug));
+    };
+    render();
+
+    btn.addEventListener('click', () => {
+      const n = catnest.addFeed(slug);
+      render();
+      // 猫粮粒飞向页脚的猫
+      const cat = document.querySelector('[data-footer-cat]');
+      const rect = btn.getBoundingClientRect();
+      const target = cat
+        ? cat.getBoundingClientRect()
+        : { left: innerWidth / 2, top: innerHeight - 60, width: 0, height: 0 };
+      for (let i = 0; i < 4; i++) {
+        const grain = document.createElement('span');
+        grain.textContent = '🐟';
+        grain.className = 'flying';
+        grain.style.left = `${rect.left + rect.width / 2}px`;
+        grain.style.top = `${rect.top}px`;
+        document.body.appendChild(grain);
+        const dx = target.left + target.width / 2 - (rect.left + rect.width / 2);
+        const dy = target.top - rect.top;
+        grain
+          .animate(
+            [
+              { transform: 'translate(0,0) scale(1)', opacity: 1 },
+              {
+                transform: `translate(${dx * 0.4 + (Math.random() - 0.5) * 120}px, ${dy * 0.45 - 80}px) scale(1.2)`,
+                opacity: 1,
+                offset: 0.5,
+              },
+              { transform: `translate(${dx}px, ${dy}px) scale(0.5)`, opacity: 0.2 },
+            ],
+            { duration: 900 + i * 120, easing: 'cubic-bezier(.3,.7,.4,1)', delay: i * 90 }
+          )
+          .finished.then(() => grain.remove())
+          .catch(() => grain.remove());
+      }
+      // 猫开心 1.5s：尾巴摆快些
+      const tail = document.querySelector('.tail');
+      if (tail instanceof HTMLElement) {
+        tail.style.animationDuration = '0.6s';
+        setTimeout(() => (tail.style.animationDuration = ''), 1500);
+      }
+    });
+  }
+</script>

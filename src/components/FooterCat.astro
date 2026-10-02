@@ -89,7 +89,7 @@
 </style>
 
 <script>
-  // 回访计数（每会话只 +1）→ 猫窝阶段
+  import { catnest } from '../scripts/catnest';
   const STAGES = [
     { min: 1, name: '初来乍到' },
     { min: 3, name: '纸箱安家' },
@@ -98,19 +98,10 @@
     { min: 20, name: '挂灯挂牌' },
     { min: 40, name: '满级猫窝' },
   ];
-  try {
-    const KEY = 'catnest.visits';
-    const SESS = 'catnest.sess';
-    let visits = parseInt(localStorage.getItem(KEY) || '0', 10);
-    if (!sessionStorage.getItem(SESS)) {
-      visits += 1;
-      localStorage.setItem(KEY, String(visits));
-      sessionStorage.setItem(SESS, '1');
-    }
-    const stage = [...STAGES].reverse().find((s) => visits >= s.min) ?? STAGES[0];
-    const el = document.querySelector('[data-nest-stage]');
-    const v = document.querySelector('[data-nest-visits]');
-    if (el) el.textContent = `猫窝 · ${stage.name}`;
-    if (v) v.textContent = `来访 ${visits} 次`;
-  } catch {}
+  const visits = catnest.countVisit();
+  const stage = [...STAGES].reverse().find((s) => visits >= s.min) ?? STAGES[0];
+  const el = document.querySelector('[data-nest-stage]');
+  const v = document.querySelector('[data-nest-visits]');
+  if (el) el.textContent = `猫窝 · ${stage.name}`;
+  if (v) v.textContent = `来访 ${visits} 次`;
 </script>

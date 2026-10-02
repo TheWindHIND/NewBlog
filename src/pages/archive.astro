@@ -1,11 +1,111 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import StarMap from '../components/StarMap.astro';
+import { getCollection } from 'astro:content';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
+  (a, b) => a.data.date.valueOf() - b.data.date.valueOf()
+);
+const stars = posts.map((p) => ({
+  id: p.id,
+  title: p.data.title,
+  year: p.data.date.getFullYear(),
+  dateISO: `${p.data.date.getFullYear()}-${String(p.data.date.getMonth() + 1).padStart(2, '0')}-${String(p.data.date.getDate()).padStart(2, '0')}`,
+  url: `${B}/posts/${p.id}`,
+}));
+
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) {
+  const y = p.data.date.getFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(p);
+}
 ---
 
-<BaseLayout title="施工中">
-  <section class="container" style="padding-block: 100px; text-align: center;">
-    <h1>✨ 星空猫座施工中</h1>
-    <p>星星们正在排队入场。</p>
-    <p><a href={import.meta.env.BASE_URL}>← 回首页</a></p>
+<BaseLayout title="星空猫座" description="全部文章的星图归档——每篇文章都是一颗星。">
+  <section class="container">
+    <h1 class="page-title">✦ 星空猫座</h1>
+    <p class="sub">每篇文章都是一颗星，按年份连成星座。共 {posts.length} 颗星在你头顶闪烁。</p>
+
+    <StarMap stars={stars} />
+
+    <!-- 列表视图降级（无 JS / 低性能设备 / SEO） -->
+    <details class="list-view">
+      <summary>切换为列表视图</summary>
+      {
+        [...byYear.entries()].map(([year, list]) => (
+          <section>
+            <h2>{year}</h2>
+            <ul>
+              {list.map((p) => (
+                <li>
+                  <a href={`${B}/posts/${p.id}`}>
+                    <span class="d">{String(p.data.date.getMonth() + 1).padStart(2, '0')}-{String(p.data.date.getDate()).padStart(2, '0')}</span>
+                    {p.data.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </details>
   </section>
 </BaseLayout>
+
+<style>
+  .container {
+    padding-block: 44px 20px;
+  }
+  .page-title {
+    font-size: 1.7rem;
+  }
+  .sub {
+    color: var(--muted);
+    margin: 8px 0 24px;
+  }
+  .list-view {
+    margin-top: 24px;
+    color: var(--text);
+  }
+  .list-view summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.92rem;
+    user-select: none;
+  }
+  .list-view section {
+    margin-top: 20px;
+  }
+  .list-view h2 {
+    font-family: var(--font-hand);
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+  .list-view ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .list-view a {
+    color: var(--text);
+    display: flex;
+    gap: 12px;
+  }
+  .list-view a:hover {
+    color: var(--accent);
+  }
+  .d {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  import { catnest } from '../scripts/catnest';
+  catnest.unlock('stargazer');
+</script>
