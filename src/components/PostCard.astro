@@ -1,0 +1,117 @@
+---
+/** 文章卡片：hover 时边缘探出一只偷看的猫 */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const { post } = Astro.props;
+const href = `${B}/posts/${post.id}`;
+const d = post.data;
+---
+
+<article class="post-card">
+  <a href={href}>
+    <div class="meta">
+      <time datetime={d.date.toISOString()}>
+        {d.date.getFullYear()} 年 {d.date.getMonth() + 1} 月 {d.date.getDate()} 日
+      </time>
+      {d.series && <span class="series">{d.series}</span>}
+    </div>
+    <h3>{d.title}</h3>
+    {d.description && <p class="desc">{d.description}</p>}
+    <div class="tags">
+      {d.tags.map((t) => <span class="tag">#{t}</span>)}
+    </div>
+
+    <!-- 偷看的猫 -->
+    <svg class="peek" viewBox="0 0 60 44" aria-hidden="true">
+      <path d="M10 22 L4 4 L20 12 Z" fill="currentColor" />
+      <path d="M50 22 L56 4 L40 12 Z" fill="currentColor" />
+      <circle cx="30" cy="26" r="21" fill="currentColor" />
+      <ellipse cx="22" cy="24" rx="3.2" ry="4.4" fill="var(--bg)" />
+      <ellipse cx="38" cy="24" rx="3.2" ry="4.4" fill="var(--bg)" />
+      <ellipse cx="22" cy="25" rx="1.4" ry="3.4" fill="currentColor" />
+      <ellipse cx="38" cy="25" rx="1.4" ry="3.4" fill="currentColor" />
+      <ellipse cx="14" cy="32" rx="3.4" ry="2" fill="var(--accent-2)" opacity="0.5" />
+      <ellipse cx="46" cy="32" rx="3.4" ry="2" fill="var(--accent-2)" opacity="0.5" />
+    </svg>
+  </a>
+</article>
+
+<style>
+  .post-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.35s var(--ease-water), border-color 0.35s, background 0.35s;
+  }
+  .post-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+  }
+  .post-card a {
+    display: block;
+    padding: 22px 22px 18px;
+    color: inherit;
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .series {
+    color: var(--accent-2);
+    background: var(--accent-2-soft);
+    padding: 1px 9px;
+    border-radius: 999px;
+  }
+  h3 {
+    margin-top: 8px;
+    font-size: 1.18rem;
+  }
+  .desc {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-size: 0.76rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 1px 9px;
+    border-radius: 999px;
+  }
+  /* 偷看的猫：默认藏在卡片右下缘外 */
+  .peek {
+    position: absolute;
+    right: 14px;
+    bottom: -16px;
+    width: 44px;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.35s var(--ease-water);
+  }
+  .post-card:hover .peek {
+    opacity: 1;
+    transform: translateY(-8px);
+  }
+</style>

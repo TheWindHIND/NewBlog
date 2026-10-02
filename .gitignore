@@ -8,3 +8,9 @@ desktop.ini
 # 日志与临时文件
 *.log
 *.tmp
+
+# Node / Astro
+node_modules/
+dist/
+.astro/
+raw-assets/

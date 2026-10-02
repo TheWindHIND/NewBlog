@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 双色瞳 favicon：左芒（金）右荒（水蓝），中间猫爪 -->
+  <defs>
+    <radialGradient id="irisL" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#F3D98B"/>
+      <stop offset="100%" stop-color="#D4A94F"/>
+    </radialGradient>
+    <radialGradient id="irisR" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#8AD8F2"/>
+      <stop offset="100%" stop-color="#3E9FC9"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="20" cy="32" rx="16" ry="19" fill="#F7F3E8"/>
+  <ellipse cx="44" cy="32" rx="16" ry="19" fill="#0B1526"/>
+  <circle cx="20" cy="32" r="11" fill="url(#irisL)"/>
+  <circle cx="44" cy="32" r="11" fill="url(#irisR)"/>
+  <ellipse cx="20" cy="32" rx="3.2" ry="7.5" fill="#1B1B1F"/>
+  <ellipse cx="44" cy="32" rx="3.2" ry="7.5" fill="#1B1B1F"/>
+  <circle cx="16.5" cy="28" r="2" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="40.5" cy="28" r="2" fill="#FFFFFF" opacity="0.85"/>
+  <!-- 猫爪印 -->
+  <g fill="#F7F3E8" transform="translate(26,6) scale(0.19)">
+    <ellipse cx="0" cy="22" rx="14" ry="11"/>
+    <ellipse cx="-15" cy="6" rx="6" ry="8"/>
+    <ellipse cx="-5" cy="0" rx="6" ry="8"/>
+    <ellipse cx="5" cy="0" rx="6" ry="8"/>
+    <ellipse cx="15" cy="6" rx="6" ry="8"/>
+  </g>
+</svg>

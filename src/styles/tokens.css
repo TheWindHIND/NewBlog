@@ -1,0 +1,79 @@
+/* ============================================
+   《藏枫的猫窝》设计令牌
+   昼 · 芒 Pneuma（金白舞台）/ 夜 · 荒 Ousia（深海蓝）
+   ============================================ */
+
+:root {
+  /* 布局 */
+  --max-w: 1080px;
+  --nav-h: 64px;
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  /* 字体（系统栈，零外部请求） */
+  --font-body: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-hand: "KaiTi", "STKaiti", "楷体", var(--font-body);
+  --font-mono: "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace;
+
+  /* 动效 */
+  --ease-water: cubic-bezier(0.22, 0.9, 0.36, 1);
+  --dur-theme: 0.7s;
+}
+
+/* ---------- 夜 · 荒 Ousia ---------- */
+:root[data-theme="ousia"] {
+  color-scheme: dark;
+  --bg: #0b1526;
+  --bg-soft: #122039;
+  --bg-card: rgba(18, 32, 57, 0.82);
+  --bg-card-hover: rgba(24, 42, 72, 0.9);
+  --border: rgba(91, 192, 232, 0.18);
+  --border-strong: rgba(91, 192, 232, 0.4);
+
+  --accent: #5bc0e8;        /* 水光蓝 */
+  --accent-soft: rgba(91, 192, 232, 0.14);
+  --accent-2: #e8c87a;      /* 星光金 */
+  --accent-2-soft: rgba(232, 200, 122, 0.14);
+
+  --text: #dce8f5;
+  --text-strong: #f2f8ff;
+  --muted: #7a8ba3;
+
+  --hero-img: url("/NewBlog/images/hero-ousia.webp");
+  --hero-overlay: linear-gradient(180deg, rgba(11, 21, 38, 0.15) 0%, rgba(11, 21, 38, 0.55) 70%, var(--bg) 100%);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --header-bg: rgba(11, 21, 38, 0.75);
+
+  /* 芒 = 金（瞳左）荒 = 蓝（瞳右）→ 荒主题下按钮左蓝右金对调强调当前态 */
+  --eye-current: #5bc0e8;
+  --eye-other: #e8c87a;
+}
+
+/* ---------- 昼 · 芒 Pneuma ---------- */
+:root[data-theme="pneuma"] {
+  color-scheme: light;
+  --bg: #f7f3e8;
+  --bg-soft: #fffdf6;
+  --bg-card: rgba(255, 253, 246, 0.85);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --border: rgba(212, 169, 79, 0.25);
+  --border-strong: rgba(212, 169, 79, 0.5);
+
+  --accent: #d4a94f;        /* 金 */
+  --accent-soft: rgba(212, 169, 79, 0.13);
+  --accent-2: #3fa7d6;      /* 水蓝点缀 */
+  --accent-2-soft: rgba(63, 167, 214, 0.12);
+
+  --text: #3a3226;
+  --text-strong: #241f16;
+  --muted: #9a8f76;
+
+  --hero-img: url("/NewBlog/images/hero-pneuma.webp");
+  --hero-overlay: linear-gradient(180deg, rgba(247, 243, 232, 0.05) 0%, rgba(247, 243, 232, 0.45) 70%, var(--bg) 100%);
+  --shadow: 0 8px 28px rgba(120, 96, 40, 0.18);
+  --header-bg: rgba(247, 243, 232, 0.78);
+
+  --eye-current: #d4a94f;
+  --eye-other: #3fa7d6;
+}

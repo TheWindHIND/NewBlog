@@ -1,0 +1,116 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { SITE } from '../consts';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const nav = [
+  { href: `${B}/`, label: '首页' },
+  { href: `${B}/posts`, label: '文章' },
+  { href: `${B}/archive`, label: '归档' },
+  { href: `${B}/gallery`, label: '图库' },
+  { href: `${B}/now`, label: 'Now' },
+  { href: `${B}/about`, label: '关于' },
+];
+const current = Astro.url.pathname.replace(/\/+$/, '') || `${B}`;
+---
+
+<header class="site-header">
+  <div class="inner container">
+    <a class="brand" href={`${B}/`} aria-label="回首页">
+      <svg class="paw" viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="currentColor">
+          <ellipse cx="32" cy="42" rx="15" ry="12" />
+          <ellipse cx="14" cy="24" rx="6.5" ry="8.5" />
+          <ellipse cx="26" cy="16" rx="6.5" ry="9" />
+          <ellipse cx="38" cy="16" rx="6.5" ry="9" />
+          <ellipse cx="50" cy="24" rx="6.5" ry="8.5" />
+        </g>
+      </svg>
+      <span class="name">{SITE.title}</span>
+    </a>
+
+    <nav aria-label="主导航">
+      {
+        nav.map((item) => {
+          const active = current === item.href.replace(/\/+$/, '');
+          return (
+            <a class:list={['nav-link', { active }]} href={item.href}>
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .inner {
+    height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-strong);
+    font-weight: 700;
+    font-size: 1.08rem;
+    letter-spacing: 0.04em;
+  }
+  .brand:hover .paw {
+    transform: rotate(-14deg) scale(1.08);
+  }
+  .paw {
+    width: 26px;
+    height: 26px;
+    color: var(--accent);
+    transition: transform 0.3s var(--ease-water);
+  }
+  nav {
+    margin-left: auto;
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .nav-link {
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-link:hover {
+    color: var(--text-strong);
+    background: var(--accent-soft);
+  }
+  .nav-link.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  @media (max-width: 640px) {
+    .name {
+      display: none;
+    }
+    .inner {
+      gap: 8px;
+    }
+    .nav-link {
+      padding: 6px 8px;
+      font-size: 0.88rem;
+    }
+  }
+</style>

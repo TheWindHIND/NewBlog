@@ -1,0 +1,185 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroCanvas from '../components/HeroCanvas.astro';
+import PostCard from '../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const allPosts = (await getCollection('posts', ({ data }) => import.meta.env.PROD ? !data.draft : true))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latest = allPosts.slice(0, 6);
+---
+
+<BaseLayout>
+  <!-- 第一屏：全屏沉浸式 hero -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <HeroCanvas />
+    <div class="hero-content container">
+      <p class="welcome">— 水之国度的猫窝 —</p>
+      <h1 class="title" data-typewriter>欢迎来到藏枫的猫窝</h1>
+      <p class="sub">泡影浮沉之间，藏着枫的文字与猫的呼噜声。</p>
+      <div class="actions">
+        <a class="btn primary" href={`${B}/posts`}>开始阅读</a>
+        <a class="btn ghost" href={`${B}/archive`}>星空归档 ✦</a>
+      </div>
+    </div>
+    <a class="scroll-hint" href="#latest" aria-label="向下滚动">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </a>
+  </section>
+
+  <!-- 第二屏：最新文章 -->
+  <section id="latest" class="latest container">
+    <div class="section-head">
+      <h2>最新的爪印</h2>
+      <a class="more" href={`${B}/posts`}>全部文章 →</a>
+    </div>
+    <div class="grid">
+      {latest.map((post) => <PostCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: calc(100svh - var(--nav-h));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-image: var(--hero-overlay), var(--hero-img);
+    background-size: cover;
+    background-position: center 30%;
+    transition: background-image 0s;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding-block: 40px;
+  }
+  .welcome {
+    font-family: var(--font-hand);
+    color: var(--accent-2);
+    letter-spacing: 0.35em;
+    font-size: 0.95rem;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+  }
+  .title {
+    margin-top: 14px;
+    font-size: clamp(2rem, 6vw, 3.6rem);
+    letter-spacing: 0.08em;
+    color: var(--text-strong);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+    min-height: 1.4em;
+  }
+  .title.typing::after {
+    content: '🐾';
+    margin-left: 4px;
+    animation: caret 0.9s steps(1) infinite;
+  }
+  @keyframes caret {
+    50% { opacity: 0.2; }
+  }
+  .sub {
+    margin-top: 14px;
+    color: var(--text);
+    opacity: 0.92;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+  }
+  .actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 26px;
+    border-radius: 999px;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+    transition: transform 0.25s var(--ease-water), box-shadow 0.25s;
+  }
+  .btn:hover {
+    transform: translateY(-3px);
+  }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 6px 22px var(--accent-soft);
+  }
+  .btn.primary:hover {
+    color: var(--bg);
+    box-shadow: 0 10px 30px var(--accent-soft);
+  }
+  .btn.ghost {
+    border: 1px solid var(--border-strong);
+    color: var(--text-strong);
+    background: var(--bg-card);
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    color: var(--text-strong);
+    opacity: 0.75;
+    animation: bounce 2s infinite;
+  }
+  .scroll-hint svg {
+    width: 30px;
+    height: 30px;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, 8px); }
+  }
+
+  .latest {
+    padding-block: 64px 20px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-head h2 {
+    font-size: 1.5rem;
+  }
+  .more {
+    font-size: 0.9rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+</style>
+
+<script>
+  // 打字机：无 JS 时直接显示完整标题，JS 加载后重新逐字打出
+  const el = document.querySelector<HTMLElement>('[data-typewriter]');
+  if (el && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const full = el.textContent ?? '';
+    el.textContent = '';
+    el.classList.add('typing');
+    let i = 0;
+    const tick = () => {
+      i += 1;
+      el.textContent = full.slice(0, i);
+      if (i < full.length) setTimeout(tick, 90 + Math.random() * 130);
+    };
+    setTimeout(tick, 350);
+  }
+</script>

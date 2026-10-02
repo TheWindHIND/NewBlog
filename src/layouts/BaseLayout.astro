@@ -1,0 +1,62 @@
+---
+import '../styles/tokens.css';
+import '../styles/base.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../consts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const { title, description = SITE.description } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} · ${SITE.subtitle}`;
+const ogImage = `${B}/images/hero-ousia.webp`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="zh-CN" data-theme="pneuma">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={`${B}/favicon.svg`} />
+    <link rel="alternate" type="application/rss+xml" title={SITE.title} href={`${B}/rss.xml`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- 主题引导：防闪烁。先读记忆，否则 18 点后默认「荒」 -->
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('catnest.theme');
+          const theme =
+            saved === 'ousia' || saved === 'pneuma'
+              ? saved
+              : new Date().getHours() >= 18
+                ? 'ousia'
+                : 'pneuma';
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          /* 隐私模式等场景忽略 */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

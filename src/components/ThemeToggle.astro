@@ -1,0 +1,92 @@
+---
+/** 芙宁娜双色瞳主题切换：左「芒」右「荒」，点击在两形态间切换（水幕过渡见 base.css） */
+---
+
+<button class="theme-toggle" type="button" aria-label="切换荒/芒主题" title="荒 / 芒" data-theme-toggle>
+  <svg viewBox="0 0 64 40" aria-hidden="true">
+    <!-- 左眼（芒）右眼（荒），当前主题一侧发光 -->
+    <ellipse class="socket" cx="18" cy="20" rx="15" ry="17.5" />
+    <ellipse class="socket" cx="46" cy="20" rx="15" ry="17.5" />
+    <circle class="iris iris-l" cx="18" cy="20" r="10.5" />
+    <circle class="iris iris-r" cx="46" cy="20" r="10.5" />
+    <ellipse class="pupil" cx="18" cy="20" rx="3" ry="7" />
+    <ellipse class="pupil" cx="46" cy="20" rx="3" ry="7" />
+    <circle class="glint" cx="14.5" cy="16.5" r="2" />
+    <circle class="glint" cx="42.5" cy="16.5" r="2" />
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    padding: 4px;
+    border-radius: 999px;
+    transition: transform 0.25s var(--ease-water);
+  }
+  .theme-toggle:hover {
+    transform: scale(1.12) rotate(-6deg);
+  }
+  .theme-toggle:active {
+    transform: scale(0.95);
+  }
+  svg {
+    width: 52px;
+    height: 33px;
+  }
+  .socket {
+    fill: var(--bg-soft);
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+  }
+  .iris-l,
+  .iris-r {
+    transition: opacity 0.4s, filter 0.4s;
+  }
+  /* 当前形态的瞳色更亮，另一侧暗淡 */
+  .iris-l {
+    fill: #d4a94f;
+  }
+  .iris-r {
+    fill: #5bc0e8;
+  }
+  :root[data-theme='pneuma'] .iris-l {
+    filter: brightness(1.25) drop-shadow(0 0 5px rgba(212, 169, 79, 0.9));
+  }
+  :root[data-theme='pneuma'] .iris-r {
+    opacity: 0.55;
+  }
+  :root[data-theme='ousia'] .iris-r {
+    filter: brightness(1.25) drop-shadow(0 0 5px rgba(91, 192, 232, 0.9));
+  }
+  :root[data-theme='ousia'] .iris-l {
+    opacity: 0.55;
+  }
+  .pupil {
+    fill: #1b1b1f;
+  }
+  .glint {
+    fill: #fff;
+    opacity: 0.85;
+  }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const next =
+        document.documentElement.dataset.theme === 'ousia' ? 'pneuma' : 'ousia';
+      const apply = () => {
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem('catnest.theme', next);
+        } catch {}
+      };
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduced && document.startViewTransition) {
+        document.startViewTransition(apply);
+      } else {
+        apply();
+      }
+    });
+  }
+</script>

@@ -1,0 +1,77 @@
+---
+import FooterCat from './FooterCat.astro';
+import { SITE, QUOTES } from '../consts';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const year = new Date().getFullYear();
+
+// 每日语录：按本地日期做 seed 轮换
+const today = new Date();
+const daySeed = today.getFullYear() * 372 + (today.getMonth() + 1) * 31 + today.getDate();
+const quote = QUOTES[daySeed % QUOTES.length];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <blockquote class="quote">
+      <p>{quote}</p>
+      <cite>—— {SITE.title} · 今日一句</cite>
+    </blockquote>
+
+    <FooterCat />
+
+    <nav class="foot-links" aria-label="页脚导航">
+      <a href={`${B}/posts`}>文章</a>
+      <span>·</span>
+      <a href={`${B}/archive`}>星空归档</a>
+      <span>·</span>
+      <a href={`${B}/gallery`}>图库</a>
+      <span>·</span>
+      <a href={`${B}/rss.xml`}>RSS</a>
+    </nav>
+
+    <p class="copy">© {year} {SITE.author} · 藏枫的猫窝 · Powered by Astro</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 72px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-soft);
+    padding: 44px 0 30px;
+    text-align: center;
+  }
+  .quote {
+    max-width: 560px;
+    margin: 0 auto 30px;
+    color: var(--text);
+  }
+  .quote p {
+    font-family: var(--font-hand);
+    font-size: 1.12rem;
+    color: var(--accent);
+  }
+  .quote cite {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    font-style: normal;
+    color: var(--muted);
+  }
+  .foot-links {
+    margin-top: 22px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+  .foot-links span {
+    color: var(--muted);
+  }
+  .copy {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+</style>
