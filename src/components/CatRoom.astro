@@ -1,0 +1,313 @@
+---
+/**
+ * 猫房间：把「猫窝养成」从卡片列表变成一间真的房间。
+ * 回访次数越多，房间里的东西越齐 —— 全部基于 localStorage，不上传任何数据。
+ */
+import Live2DCat from './Live2DCat.astro';
+import Icon from './Icon.astro';
+import { CAT_NEST_STAGES } from '../consts';
+
+// 沿灯串曲线生成灯泡位置
+const bulbs: { x: number; y: number }[] = [];
+for (let i = 0; i <= 16; i++) {
+  const t = i / 16;
+  const x = 56 + t * 688;
+  // 二次贝塞尔 P0(56,46) P1(400,100) P2(744,46)
+  const y = (1 - t) * (1 - t) * 46 + 2 * (1 - t) * t * 100 + t * t * 46;
+  bulbs.push({ x, y });
+}
+
+const items = [
+  { need: 3, name: '纸箱安家', icon: 'shell' as const },
+  { need: 5, name: '软垫伺候', icon: 'bubble' as const },
+  { need: 10, name: '抱枕毛线', icon: 'cat' as const },
+  { need: 20, name: '挂灯挂牌', icon: 'star' as const },
+  { need: 40, name: '满级猫窝', icon: 'hat' as const },
+];
+---
+
+<div class="cat-room" data-cat-room>
+  <div class="stage">
+    <svg class="scene" viewBox="0 0 800 460" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="cr-wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--room-wall-2)" />
+          <stop offset="1" stop-color="var(--room-wall)" />
+        </linearGradient>
+        <linearGradient id="cr-water" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--room-water)" stop-opacity="0.85" />
+          <stop offset="0.55" stop-color="var(--room-water)" stop-opacity="0.5" />
+          <stop offset="1" stop-color="var(--room-water)" stop-opacity="0.22" />
+        </linearGradient>
+        <radialGradient id="cr-lamp" cx="0.5" cy="0.2" r="0.8">
+          <stop offset="0" stop-color="var(--room-glow)" />
+          <stop offset="1" stop-color="var(--room-glow)" stop-opacity="0" />
+        </radialGradient>
+        <pattern id="cr-stripe" width="34" height="34" patternUnits="userSpaceOnUse">
+          <rect width="34" height="34" fill="none" />
+          <path d="M0 34 L34 0" stroke="var(--ornament)" stroke-width="0.6" opacity="0.22" />
+        </pattern>
+        <clipPath id="cr-window-clip">
+          <rect x="548" y="54" width="148" height="126" rx="4" />
+        </clipPath>
+      </defs>
+
+      <!-- 墙 -->
+      <rect x="0" y="0" width="800" height="322" fill="url(#cr-wall)" />
+      <rect x="0" y="0" width="800" height="322" fill="url(#cr-stripe)" />
+      <rect x="0" y="0" width="800" height="322" fill="url(#cr-lamp)" />
+
+      <!-- 地板 -->
+      <rect x="0" y="322" width="800" height="138" fill="var(--room-floor)" />
+      <rect x="0" y="318" width="800" height="10" fill="var(--room-wood)" opacity="0.8" />
+      <rect x="0" y="328" width="800" height="30" fill="#000" opacity="0.12" />
+      <g opacity="0.22" stroke="var(--room-wood)" stroke-width="1">
+        <path d="M0 360 H800 M0 400 H800 M0 440 H800" />
+        <path d="M160 322 L120 460 M400 322 L400 460 M640 322 L680 460" />
+      </g>
+
+      <!-- 窗（外面是枫丹的水） -->
+      <g>
+        <rect x="540" y="46" width="164" height="142" rx="8" fill="var(--room-wood)" />
+        <g clip-path="url(#cr-window-clip)">
+          <rect x="548" y="54" width="148" height="126" fill="url(#cr-water)" />
+          <circle cx="586" cy="150" r="8" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.6" />
+          <circle cx="612" cy="128" r="4.5" fill="none" stroke="#fff" stroke-width="1" opacity="0.5" />
+          <circle cx="655" cy="158" r="6" fill="none" stroke="#fff" stroke-width="1" opacity="0.45" />
+          <circle cx="668" cy="112" r="3.5" fill="none" stroke="#fff" stroke-width="1" opacity="0.4" />
+          <path d="M548 108 H696 M622 54 V180" stroke="var(--room-wood)" stroke-width="5" opacity="0.9" />
+        </g>
+        <rect x="532" y="184" width="180" height="12" rx="5" fill="var(--room-wood)" />
+      </g>
+
+      <!-- 灯串（第 5 幕解锁） -->
+      <g class="it" data-need="20">
+        <path
+          d="M56 46 Q 400 100 744 46"
+          fill="none"
+          stroke="var(--gold-trim)"
+          stroke-width="1.4"
+          opacity="0.6"
+        />
+        {bulbs.map((b, i) => (
+          <g>
+            <line x1={b.x} y1={b.y} x2={b.x} y2={b.y + 7} stroke="var(--gold-trim)" stroke-width="1" opacity="0.55" />
+            <circle
+              class="bulb"
+              cx={b.x}
+              cy={b.y + 12}
+              r="4.4"
+              style={`animation-delay:${(i * 0.24).toFixed(2)}s`}
+            />
+          </g>
+        ))}
+      </g>
+
+      <!-- 名牌（第 5 幕解锁） -->
+      <g class="it" data-need="20">
+        <line x1="454" y1="0" x2="454" y2="64" stroke="var(--gold-trim)" stroke-width="1.4" opacity="0.6" />
+        <rect
+          x="392"
+          y="64"
+          width="124"
+          height="46"
+          rx="8"
+          fill="var(--bg-card)"
+          stroke="var(--ornament)"
+          stroke-width="1.4"
+        />
+        <text
+          x="454"
+          y="93"
+          text-anchor="middle"
+          font-size="18"
+          font-family="var(--font-hand)"
+          fill="var(--accent)"
+          letter-spacing="3">枫的猫</text
+        >
+      </g>
+
+      <!-- 墙上相框（第 6 幕解锁） -->
+      <g class="it" data-need="40">
+        {[
+          { x: 76, y: 74, w: 74, h: 56, rot: -4, fill: 'var(--accent-2)' },
+          { x: 162, y: 60, w: 88, h: 66, rot: 2, fill: 'var(--accent)' },
+          { x: 108, y: 146, w: 62, h: 48, rot: 3, fill: 'var(--accent-2)' },
+        ].map((f) => (
+          <g transform={`rotate(${f.rot} ${f.x + f.w / 2} ${f.y + f.h / 2})`}>
+            <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="3" fill="var(--ornament)" />
+            <rect
+              x={f.x + 5}
+              y={f.y + 5}
+              width={f.w - 10}
+              height={f.h - 10}
+              rx="2"
+              fill={f.fill}
+              fill-opacity="0.75"
+            />
+            <g
+              transform={`translate(${f.x + f.w / 2} ${f.y + f.h / 2}) scale(${f.w / 90})`}
+              fill="none"
+              stroke="var(--bg)"
+              stroke-width="3"
+              stroke-linecap="round"
+              opacity="0.5"
+            >
+              <path d="M-16 8 C-12 -6 12 -6 16 8" />
+              <circle cx="-7" cy="-4" r="2.4" />
+              <circle cx="7" cy="-4" r="2.4" />
+            </g>
+          </g>
+        ))}
+      </g>
+
+      <!-- 纸箱（第 2 幕解锁） -->
+      <g class="it" data-need="3">
+        <ellipse cx="140" cy="408" rx="70" ry="12" fill="#000" opacity="0.16" />
+        <path d="M84 312 L196 312 L196 406 L84 406 Z" fill="#c39b68" />
+        <path d="M84 312 L196 312 L196 326 L84 326" fill="#8d6c42" opacity="0.32" />
+        <path d="M90 306 L130 296 L152 318 L112 326 Z" fill="#d3ad7c" />
+        <path d="M190 306 L150 296 L128 318 L168 326 Z" fill="#d3ad7c" />
+        <g fill="#8d6c42" opacity="0.5" transform="translate(140 372)">
+          <ellipse rx="11" ry="8.5" />
+          <circle cx="-13" cy="-11" r="4" />
+          <circle cx="-4.5" cy="-15" r="4" />
+          <circle cx="4.5" cy="-15" r="4" />
+          <circle cx="13" cy="-11" r="4" />
+        </g>
+      </g>
+
+      <!-- 绿植（第 6 幕解锁） -->
+      <g class="it" data-need="40">
+        <path d="M228 322 L268 322 L262 372 L234 372 Z" fill="var(--room-wood)" />
+        <path d="M248 322 C 232 300 226 274 240 254 C 254 274 256 300 248 322 Z" fill="var(--accent)" opacity="0.7" />
+        <path d="M248 322 C 266 302 274 278 262 258 C 246 278 242 302 248 322 Z" fill="var(--accent)" opacity="0.5" />
+      </g>
+
+      <!-- 猫爬架（第 6 幕解锁） -->
+      <g class="it" data-need="40">
+        <ellipse cx="729" cy="334" rx="46" ry="10" fill="#000" opacity="0.18" />
+        <rect x="722" y="196" width="15" height="132" fill="var(--room-wood)" />
+        <path d="M722 214 h15 M722 232 h15 M722 250 h15 M722 268 h15 M722 286 h15 M722 304 h15"
+          stroke="#000" stroke-width="1.5" opacity="0.14" />
+        <ellipse cx="729" cy="196" rx="56" ry="13" fill="var(--room-wood)" />
+        <ellipse cx="729" cy="192" rx="46" ry="9" fill="var(--accent-2)" fill-opacity="0.35" />
+        <rect x="692" y="308" width="74" height="24" rx="9" fill="var(--room-wood)" />
+        <rect x="696" y="272" width="66" height="18" rx="7" fill="var(--room-wood)" />
+        <circle cx="729" cy="258" r="13" fill="var(--bg)" opacity="0.85" stroke="var(--ornament)" stroke-width="1.2" />
+        <line x1="729" y1="190" x2="729" y2="168" stroke="var(--ornament)" stroke-width="1.2" />
+        <circle cx="729" cy="160" r="12" fill="var(--accent-2)" fill-opacity="0.55" stroke="var(--ornament)" stroke-width="1.2" />
+      </g>
+
+      <!-- 抱枕与毛线（第 4 幕解锁） -->
+      <g class="it" data-need="10">
+        <ellipse cx="600" cy="420" rx="96" ry="14" fill="#000" opacity="0.12" />
+        <g transform="rotate(-9 592 386)">
+          <rect x="544" y="352" width="96" height="68" rx="16" fill="var(--accent-2)" fill-opacity="0.42" stroke="var(--ornament)" stroke-width="1.4" />
+          <path d="M556 366 L628 406 M628 366 L556 406" stroke="var(--ornament)" stroke-width="0.9" opacity="0.6" />
+        </g>
+        <g transform="rotate(7 656 392)">
+          <rect x="616" y="362" width="80" height="58" rx="14" fill="var(--accent)" fill-opacity="0.34" stroke="var(--ornament)" stroke-width="1.4" />
+          <path d="M628 374 L684 408 M684 374 L628 408" stroke="var(--ornament)" stroke-width="0.9" opacity="0.5" />
+        </g>
+        <circle cx="546" cy="424" r="20" fill="var(--accent)" opacity="0.95" />
+        <path d="M528 424 q18 -12 36 0 M532 432 q14 8 28 -2 M528 416 q18 10 36 4" stroke="#fff" stroke-width="1.1" fill="none" opacity="0.55" />
+        <path d="M560 428 q34 14 68 4" stroke="var(--accent)" stroke-width="1.6" fill="none" opacity="0.75" />
+      </g>
+
+      <!-- 软垫（第 3 幕解锁） -->
+      <g class="it" data-need="5">
+        <ellipse cx="400" cy="428" rx="150" ry="34" fill="#000" opacity="0.1" />
+        <ellipse cx="400" cy="418" rx="144" ry="31" fill="var(--accent-2)" fill-opacity="0.3" stroke="var(--ornament)" stroke-width="1.4" />
+        <ellipse cx="400" cy="414" rx="118" ry="23" fill="none" stroke="var(--ornament)" stroke-width="1" opacity="0.6" />
+        <ellipse cx="400" cy="410" rx="84" ry="15" fill="none" stroke="var(--ornament)" stroke-width="1" opacity="0.45" />
+      </g>
+
+      <!-- 猫粮碗 -->
+      <g class="it" data-need="0">
+        <ellipse cx="376" cy="446" rx="34" ry="11" fill="#000" opacity="0.12" />
+        <path d="M348 434 q28 20 56 0 q-4 16 -28 16 q-24 0 -28 -16 Z" fill="var(--accent)" opacity="0.9" />
+        <ellipse cx="376" cy="434" rx="28" ry="8" fill="var(--accent-2)" opacity="0.95" />
+      </g>
+    </svg>
+
+    <!-- 主角 -->
+    <div class="cat-slot">
+      <Live2DCat size="100%" greet />
+    </div>
+  </div>
+</div>
+
+<style>
+  .cat-room {
+    margin-top: 8px;
+    border: 1px solid var(--frame-line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .stage {
+    position: relative;
+    aspect-ratio: 800 / 460;
+    background: var(--room-wall);
+  }
+  .scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .cat-slot {
+    position: absolute;
+    left: 50%;
+    bottom: 5%;
+    width: 26%;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.32));
+  }
+
+  /* 家具：未解锁时隐藏，解锁后弹入 */
+  .it {
+    opacity: 0;
+    transform: translateY(12px);
+    transform-box: fill-box;
+    transform-origin: bottom center;
+    transition: opacity 0.6s var(--ease-water), transform 0.7s var(--ease-water);
+  }
+  .it.on {
+    opacity: 1;
+    transform: none;
+    transition-delay: var(--d, 0s);
+  }
+  .bulb {
+    fill: var(--gold-trim);
+    animation: bulb-blink 3.4s ease-in-out infinite;
+  }
+  @keyframes bulb-blink {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bulb { animation: none; opacity: 0.8; }
+    .it { transition: none; }
+  }
+</style>
+
+<script>
+  import { catnest } from '../scripts/catnest';
+  const room = document.querySelector<HTMLElement>('[data-cat-room]');
+  if (room) {
+    const visits = catnest.countVisit();
+    const nodes = [...room.querySelectorAll<SVGGElement>('.it[data-need]')]
+      .map((el) => ({ el, need: Number(el.dataset.need ?? '0') }))
+      .sort((a, b) => a.need - b.need);
+    nodes.forEach(({ el, need }, i) => {
+      el.style.setProperty('--d', `${Math.min(i * 0.09, 0.5)}s`);
+      if (visits >= need) el.classList.add('on');
+    });
+    // 总投喂量显示在说明区
+    const feed = document.querySelector('[data-room-feed]');
+    if (feed) feed.textContent = String(catnest.totalFeed());
+  }
+</script>

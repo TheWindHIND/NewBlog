@@ -1,128 +1,489 @@
 ---
+/**
+ * 关于 · 演出介绍册
+ * 用歌剧节目册的结构介绍这个猫窝：序曲 / 登场人物 / 舞台机关 / 幕次 / 谢幕徽章
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Ornament from '../components/Ornament.astro';
+import Live2DCat from '../components/Live2DCat.astro';
 import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES } from '../consts';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+const machinery = [
+  { icon: 'bubble' as const, name: '荒 · 芒 双形态', desc: '昼是黄金舞台，夜是深海王座。点右上角的异色瞳就能换一幕。' },
+  { icon: 'star' as const, name: '星空猫座', desc: '归档页里每篇文章是一颗星，按年份连成星座，可拖拽、可缩放。' },
+  { icon: 'cat' as const, name: '猫窝养成', desc: '每回访一次，页脚的猫窝就更热闹一点——数据只存在你自己的浏览器。' },
+  { icon: 'wave' as const, name: '水幕转场', desc: '站内跳转时一道水幕漫过整屏，像换场一样换页。' },
+  { icon: 'quill' as const, name: '手写 Markdown', desc: '文章写进 Markdown 就自动成页，不需要数据库，也不需要后台。' },
+  { icon: 'drop' as const, name: '零外部依赖', desc: '没有第三方 CDN、没有追踪脚本，字体走系统栈，弱网也能开。' },
+];
+
+const cast = [
+  { role: '编剧 · 主演', name: '枫', line: '写代码、写日记、也写给自己看的碎碎念。' },
+  { role: '特别出演', name: '芙宁娜猫猫', line: '窝在页脚，负责眨眼、摇尾巴和提醒你休息。' },
+];
 ---
 
-<BaseLayout title="关于" description={`关于${SITE.title}与${SITE.author}`}>
+<BaseLayout title="关于" description={`关于${SITE.title}与${SITE.author}——一册演出介绍`}>
   <section class="container">
-    <h1 class="page-title">🐾 关于这个猫窝</h1>
+    <header class="playbill">
+      <p class="pb-kicker">THE PROGRAMME</p>
+      <h1 class="pb-title">演出介绍册</h1>
+      <p class="pb-sub">{SITE.title} · {SITE.subtitle}</p>
+      <span class="pb-divider" aria-hidden="true">
+        <i></i><Icon name="mask" size={15} /><i></i>
+      </span>
+    </header>
 
-    <div class="intro">
-      <p>
-        你好，我是<strong>{SITE.author}</strong>。「藏枫」——把枫藏起来的地方，就是猫窝。
-      </p>
-      <p>
-        这里是我的个人博客：写折腾记录、思考和日常。设计灵感来自枫丹的水色与舞台，
-        所以你会看到泡泡、星空和一只怎么都睡不够的猫。
-      </p>
-      <p>
-        网站基于 Astro 构建，托管在 GitHub Pages；除了字体以外没有任何外部依赖，
-        希望它在任何网络下都能快快打开。
-      </p>
-    </div>
+    <!-- 序曲 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">序曲</span>OVERTURE</h2>
+      <div class="prose">
+        <p>
+          你好，我是<strong>{SITE.author}</strong>。「藏枫」——把枫藏起来的地方，就是猫窝。
+        </p>
+        <p>
+          这里是我的个人博客：写折腾记录、写思考、也写没什么用的日常。
+          设计灵感来自枫丹的水色与舞台，所以你会看到泡泡、星空，和一只怎么都睡不够的猫。
+        </p>
+        <p>
+          网站用 Astro 在构建时生成纯静态页面，托管在 GitHub Pages。
+          除了这张网页本身，没有第三方脚本会跟着你离开。
+        </p>
+      </div>
+    </section>
 
-    <h2 class="sec">🐱 猫窝养成</h2>
-    <p class="sec-sub">你每来一次，猫窝都会更热闹一点（数据只存在你自己的浏览器里）：</p>
-    <ol class="stages">
-      {
-        CAT_NEST_STAGES.map((s) => (
-          <li>
-            <strong>{s.name}</strong>
-            <span class="min">{s.min} 次</span>
-            <p>{s.desc}</p>
-          </li>
-        ))
-      }
-    </ol>
+    <Ornament motif="drop" label="登场" />
 
-    <h2 class="sec">🏆 成就徽章</h2>
-    <p class="sec-sub">逛猫窝的过程中会解锁一些小成就：</p>
-    <div class="badges" data-badges>
-      {
-        ACHIEVEMENTS.map((a) => (
-          <div class="badge" data-ach-id={a.id}>
-            <span class="icon">{a.icon}</span>
-            <strong>{a.name}</strong>
-            <p>{a.desc}</p>
-          </div>
-        ))
-      }
-    </div>
+    <!-- 登场人物 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">登场人物</span>CAST</h2>
+      <div class="cast">
+        <figure class="portrait">
+          <img src={`${B}/images/avatar.webp`} alt={`${SITE.author} 的头像`} width="520" height="520" loading="lazy" />
+          <span class="portrait-frame" aria-hidden="true"></span>
+        </figure>
+        <ul class="cast-list">
+          {
+            cast.map((c) => (
+              <li>
+                <span class="role">{c.role}</span>
+                <strong class="cname">{c.name}</strong>
+                <p>{c.line}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div class="understudy">
+        <Live2DCat size="clamp(130px, 20vw, 190px)" greet />
+        <p class="understudy-note">
+          <span class="tag">替角</span>
+          这只猫会在你每次打开猫窝时鞠躬——它由三层立绘拼成，会眨眼、会看着你的鼠标、会摇尾巴。
+        </p>
+      </div>
+    </section>
+
+    <Ornament motif="hat" label="机关" />
+
+    <!-- 舞台机关 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">舞台机关</span>STAGE MACHINERY</h2>
+      <ul class="machinery">
+        {
+          machinery.map((m) => (
+            <li>
+              <span class="m-icon"><Icon name={m.icon} size={18} /></span>
+              <div>
+                <strong>{m.name}</strong>
+                <p>{m.desc}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <Ornament motif="cat" label="幕次" />
+
+    <!-- 猫窝成长纪 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">猫窝成长纪</span>ACTS</h2>
+      <p class="sec-sub">你每来一次，猫窝就换一幕（记录只存在你自己的浏览器里）：</p>
+      <ol class="stages" data-stages>
+        {
+          CAT_NEST_STAGES.map((s, i) => (
+            <li data-stage-min={s.min}>
+              <span class="act-no">第 {i + 1} 幕</span>
+              <div class="stage-body">
+                <div class="stage-head">
+                  <strong>{s.name}</strong>
+                  <span class="min">{s.min} 次回访</span>
+                </div>
+                <p>{s.desc}</p>
+              </div>
+              <span class="stage-mark" aria-hidden="true"><Icon name="drop" size={14} /></span>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <Ornament motif="star" label="谢幕" />
+
+    <!-- 徽章墙 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">谢幕</span>CURTAIN CALL</h2>
+      <p class="sec-sub">在猫窝里逛着逛着，会顺手收下这些纪念章：</p>
+      <div class="badges" data-badges>
+        {
+          ACHIEVEMENTS.map((a) => (
+            <div class="badge" data-ach-id={a.id}>
+              <span class="b-icon"><Icon name={a.glyph} size={22} /></span>
+              <strong>{a.name}</strong>
+              <p>{a.desc}</p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="badge-count">
+        <span data-badge-progress>已收集 0 / {ACHIEVEMENTS.length}</span>
+      </p>
+    </section>
+
+    <p class="colophon">
+      © {new Date().getFullYear()} {SITE.author} · 本站为个人二创作品，与原作权利方无关。
+    </p>
   </section>
 </BaseLayout>
 
 <style>
   .container {
-    padding-block: 44px 20px;
-    max-width: 860px;
+    padding-block: 40px 20px;
+    max-width: 880px;
   }
-  .page-title {
-    font-size: 1.7rem;
+
+  /* ---------- 节目册页头 ---------- */
+  .playbill {
+    text-align: center;
+    padding: 28px 22px 24px;
+    position: relative;
+    border: 1px solid var(--frame-line);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
+      var(--bg-card);
   }
-  .intro {
-    margin-top: 20px;
-    display: grid;
+  .playbill::before,
+  .playbill::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--ornament);
+    border-radius: calc(var(--radius-lg) - 7px);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .playbill::after {
+    inset: 11px;
+    opacity: 0.16;
+  }
+  .pb-kicker {
+    font-size: 0.7rem;
+    letter-spacing: 0.46em;
+    text-indent: 0.46em;
+    color: var(--muted);
+  }
+  .pb-title {
+    margin-top: 10px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.7rem, 5vw, 2.5rem);
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+  .pb-sub {
+    margin-top: 8px;
+    font-size: 0.84rem;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+  .pb-divider {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
     gap: 10px;
-    font-size: 1.02rem;
+    color: var(--accent-2);
   }
+  .pb-divider i {
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+  }
+  .pb-divider i:last-child {
+    background: linear-gradient(90deg, var(--ornament), transparent);
+  }
+
+  /* ---------- 章节 ---------- */
   .sec {
-    margin-top: 44px;
-    font-size: 1.25rem;
+    margin-top: 8px;
+  }
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .sec-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ornament), transparent);
+    opacity: 0.5;
+  }
+  .sec-title .ord {
+    font-family: var(--font-hand);
+    font-size: 1.3rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
   }
   .sec-sub {
+    margin: -6px 0 16px;
+    font-size: 0.87rem;
     color: var(--muted);
-    font-size: 0.9rem;
-    margin-top: 4px;
   }
-  .stages {
-    margin-top: 16px;
+  .prose {
+    display: grid;
+    gap: 10px;
+    font-size: 1.01rem;
+  }
+  .prose strong {
+    color: var(--accent);
+  }
+
+  /* ---------- 登场人物 ---------- */
+  .cast {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 26px;
+    align-items: start;
+  }
+  .portrait {
+    margin: 0;
+    position: relative;
+  }
+  .portrait img {
+    width: 100%;
+    border-radius: 10px;
+    display: block;
+  }
+  .portrait-frame {
+    position: absolute;
+    inset: -8px;
+    border: 1px solid var(--ornament);
+    border-radius: 14px;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .portrait-frame::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 1px solid var(--ornament);
+    border-radius: 18px;
+    opacity: 0.3;
+  }
+  .cast-list {
     list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 18px;
+  }
+  .cast-list .role {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-2);
+  }
+  .cast-list .cname {
+    display: block;
+    margin-top: 4px;
+    font-size: 1.5rem;
+    font-family: var(--font-hand);
+    letter-spacing: 0.12em;
+    color: var(--text-strong);
+  }
+  .cast-list p {
+    margin-top: 6px;
+    font-size: 0.93rem;
+    color: var(--muted);
+  }
+  .understudy {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 22px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+  }
+  .understudy-note {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+  .tag {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 1px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* ---------- 舞台机关 ---------- */
+  .machinery {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 14px;
+  }
+  .machinery li {
+    display: flex;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    transition: transform 0.3s var(--ease-water), border-color 0.3s;
+  }
+  .machinery li:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-strong);
+  }
+  .m-icon {
+    color: var(--accent);
+    flex: none;
+    margin-top: 3px;
+  }
+  .machinery strong {
+    font-size: 0.96rem;
+    color: var(--text-strong);
+  }
+  .machinery p {
+    margin-top: 5px;
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ---------- 猫窝成长纪 ---------- */
+  .stages {
+    list-style: none;
+    margin: 0;
     padding: 0;
     display: grid;
     gap: 10px;
   }
   .stages li {
-    padding: 12px 18px;
-    background: var(--bg-card);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 18px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    background: var(--bg-card);
+    transition: border-color 0.35s, background 0.35s, transform 0.35s var(--ease-water);
+  }
+  .stages .act-no {
+    font-family: var(--font-hand);
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    flex: none;
+    padding-top: 3px;
+  }
+  .stage-body {
+    flex: 1;
+  }
+  .stage-head {
     display: flex;
     align-items: baseline;
-    gap: 12px;
+    gap: 10px;
   }
-  .stages .min {
-    font-size: 0.76rem;
+  .stage-head strong {
+    font-size: 1rem;
+    color: var(--text-strong);
+  }
+  .stage-head .min {
+    font-size: 0.72rem;
     color: var(--accent-2);
     background: var(--accent-2-soft);
     padding: 1px 9px;
     border-radius: 999px;
   }
-  .stages p {
-    margin: 0;
+  .stage-body p {
+    margin-top: 5px;
+    font-size: 0.86rem;
     color: var(--muted);
-    font-size: 0.88rem;
   }
+  .stage-mark {
+    color: var(--ornament);
+    opacity: 0.25;
+    flex: none;
+    margin-top: 4px;
+    transition: opacity 0.35s, color 0.35s;
+  }
+  /* 已达成的幕次 */
+  .stages li.reached {
+    border-color: var(--border-strong);
+    background: var(--accent-soft);
+  }
+  .stages li.reached .stage-mark {
+    opacity: 1;
+    color: var(--accent);
+  }
+  .stages li.reached .act-no {
+    color: var(--accent);
+  }
+  .stages li.current {
+    transform: translateX(6px);
+  }
+
+  /* ---------- 徽章墙 ---------- */
   .badges {
-    margin-top: 16px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
     gap: 14px;
   }
   .badge {
-    padding: 16px;
+    padding: 18px 14px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--bg-card);
     text-align: center;
     transition: transform 0.3s var(--ease-water), border-color 0.3s, opacity 0.3s, filter 0.3s;
   }
-  .badge .icon {
-    font-size: 1.8rem;
+  .badge .b-icon {
+    display: inline-flex;
+    color: var(--accent);
   }
   .badge strong {
     display: block;
-    margin-top: 6px;
-    color: var(--accent);
+    margin-top: 8px;
+    color: var(--text-strong);
     font-size: 0.94rem;
   }
   .badge p {
@@ -130,21 +491,68 @@ import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES } from '../consts';
     font-size: 0.76rem;
     color: var(--muted);
   }
-  /* 未解锁：灰暗 */
   .badge.locked {
-    opacity: 0.38;
+    opacity: 0.36;
     filter: grayscale(1);
+  }
+  .badge:not(.locked) {
+    border-color: var(--border-strong);
   }
   .badge:not(.locked):hover {
     transform: translateY(-4px);
-    border-color: var(--border-strong);
+  }
+  .badge-count {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+  .colophon {
+    margin-top: 46px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 640px) {
+    .cast {
+      grid-template-columns: 1fr;
+    }
+    .portrait {
+      max-width: 210px;
+      margin-inline: auto;
+    }
+    .understudy {
+      flex-direction: column;
+      text-align: center;
+    }
   }
 </style>
 
 <script>
   import { catnest } from '../scripts/catnest';
+
+  // 徽章解锁状态
   const got = new Set(catnest.achievements());
   document.querySelectorAll<HTMLElement>('[data-ach-id]').forEach((el) => {
     if (!got.has(el.dataset.achId ?? '')) el.classList.add('locked');
   });
+  const prog = document.querySelector('[data-badge-progress]');
+  if (prog) {
+    prog.textContent = `已收集 ${got.size} / ${document.querySelectorAll('[data-ach-id]').length}`;
+  }
+
+  // 猫窝成长纪：高亮已达成的幕次与当前幕
+  const visits = catnest.countVisit();
+  const lis = [...document.querySelectorAll<HTMLElement>('[data-stage-min]')];
+  let current: HTMLElement | undefined;
+  for (const li of lis) {
+    const min = Number(li.dataset.stageMin ?? '0');
+    if (visits >= min) {
+      li.classList.add('reached');
+      current = li;
+    }
+  }
+  current?.classList.add('current');
 </script>

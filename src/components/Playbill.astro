@@ -1,0 +1,94 @@
+---
+/**
+ * 节目单式页头：金色双线画框 + 小图标 + 刊头 + 标题 + 副标题
+ * 各栏目的统一门面，替代原本朴素的 <h1>
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  kicker: string;
+  title: string;
+  sub?: string;
+  motif?: 'hat' | 'mask' | 'note' | 'drop' | 'bubble' | 'cat' | 'star' | 'quill' | 'curtain' | 'shell' | 'eye' | 'wave';
+  class?: string;
+}
+
+const { kicker, title, sub, motif = 'drop', class: cls = '' } = Astro.props;
+---
+
+<header class:list={['playbill', cls]}>
+  <span class="pb-motif"><Icon name={motif} size={18} /></span>
+  <p class="pb-kicker">{kicker}</p>
+  <h1 class="pb-title">{title}</h1>
+  {sub && <p class="pb-sub">{sub}</p>}
+  <span class="pb-divider" aria-hidden="true">
+    <i></i><Icon name="bubble" size={13} /><i></i>
+  </span>
+</header>
+
+<style>
+  .playbill {
+    text-align: center;
+    padding: 26px 22px 22px;
+    position: relative;
+    border: 1px solid var(--frame-line);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
+      var(--bg-card);
+  }
+  .playbill::before,
+  .playbill::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--ornament);
+    border-radius: calc(var(--radius-lg) - 7px);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .playbill::after {
+    inset: 11px;
+    opacity: 0.16;
+  }
+  .pb-motif {
+    display: inline-flex;
+    color: var(--accent-2);
+  }
+  .pb-kicker {
+    margin-top: 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.46em;
+    text-indent: 0.46em;
+    color: var(--muted);
+  }
+  .pb-title {
+    margin-top: 10px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.6rem, 4.6vw, 2.3rem);
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+  .pb-sub {
+    margin-top: 9px;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .pb-divider {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-2);
+  }
+  .pb-divider i {
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+  }
+  .pb-divider i:last-child {
+    background: linear-gradient(90deg, var(--ornament), transparent);
+  }
+</style>

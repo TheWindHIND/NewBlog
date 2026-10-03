@@ -29,9 +29,11 @@ const gallery = defineCollection({
 const now = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/now' }),
   schema: z.object({
+    updated: z.coerce.date().optional(),
     playing: z.array(z.string()).default([]),
     watching: z.array(z.string()).default([]),
     listening: z.array(z.string()).default([]),
+    note: z.string().optional(),
   }),
 });
 

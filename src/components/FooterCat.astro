@@ -1,51 +1,21 @@
 ---
-/** 页脚猫：会摆尾、会眨眼的 SVG 猫。M4 将接入猫窝养成阶段（随回访次数成长） */
+/**
+ * 页脚猫窝：Live2D 芙宁娜猫猫 + 猫窝养成阶段标签
+ * 回访次数（每会话 +1）决定猫窝阶段，并影响猫猫的心情
+ */
+import Live2DCat from './Live2DCat.astro';
+import { CAT_NEST_STAGES } from '../consts';
 ---
 
-<div class="footer-cat" data-footer-cat aria-hidden="true">
-  <svg viewBox="0 0 140 120" class="cat">
-    <!-- 尾巴（摆动） -->
-    <path
-      class="tail"
-      d="M108 92 Q 130 84 126 58 Q 124 46 114 44"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="9"
-      stroke-linecap="round"
-    />
-    <!-- 身体 -->
-    <ellipse cx="70" cy="92" rx="34" ry="24" fill="currentColor" />
-    <!-- 前爪 -->
-    <ellipse cx="52" cy="112" rx="10" ry="5" fill="currentColor" />
-    <ellipse cx="88" cy="112" rx="10" ry="5" fill="currentColor" />
-    <!-- 头 -->
-    <g transform="translate(58,52)">
-      <path class="ear ear-l" d="M-20 -12 L-26 -34 L-6 -22 Z" fill="currentColor" />
-      <path class="ear ear-r" d="M20 -12 L26 -34 L6 -22 Z" fill="currentColor" />
-      <circle cx="0" cy="0" r="22" fill="currentColor" />
-      <!-- 眼睛（眨眼动画） -->
-      <g class="eyes">
-        <ellipse class="eye" cx="-8" cy="-2" rx="3.4" ry="4.6" fill="#1b1b1f" />
-        <ellipse class="eye" cx="8" cy="-2" rx="3.4" ry="4.6" fill="#1b1b1f" />
-        <circle cx="-7" cy="-3.5" r="1.1" fill="#fff" />
-        <circle cx="9" cy="-3.5" r="1.1" fill="#fff" />
-      </g>
-      <!-- 腮红 -->
-      <ellipse cx="-13" cy="6" rx="3.6" ry="2.2" fill="var(--accent-2)" opacity="0.4" />
-      <ellipse cx="13" cy="6" rx="3.6" ry="2.2" fill="var(--accent-2)" opacity="0.4" />
-      <!-- 鼻嘴 -->
-      <path d="M-2.5 6 Q0 8 2.5 6" fill="none" stroke="#1b1b1f" stroke-width="1.4" stroke-linecap="round" />
-      <circle cx="0" cy="3.5" r="1.6" fill="#1b1b1f" />
-      <!-- 项圈 + 铃铛 -->
-      <path d="M-16 16 Q0 24 16 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" />
-      <circle cx="0" cy="22" r="4" fill="var(--accent-2)" />
-      <path d="M-1.2 20.8 L1.2 20.8 M0 20.8 L0 23.4" stroke="#1b1b1f" stroke-width="1" />
-    </g>
-  </svg>
+<div class="footer-cat">
+  <Live2DCat size="clamp(120px, 15vw, 168px)" class="cat-l2d" greet />
   <p class="nest-label">
-    <span data-nest-stage>猫窝 · 初来乍到</span>
+    <span class="stage" data-nest-stage>猫窝 · 初来乍到</span>
     <span class="visits" data-nest-visits></span>
   </p>
+  <div class="nest-progress" aria-hidden="true">
+    <span data-nest-bar></span>
+  </div>
 </div>
 
 <style>
@@ -53,55 +23,60 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
   }
-  .cat {
-    width: 108px;
-    color: var(--text);
-    opacity: 0.92;
-  }
-  .tail {
-    transform-origin: 108px 92px;
-    animation: tail-wag 3.2s var(--ease-water) infinite;
-  }
-  @keyframes tail-wag {
-    0%, 100% { transform: rotate(0deg); }
-    30% { transform: rotate(14deg); }
-    60% { transform: rotate(-8deg); }
-  }
-  .eyes {
-    animation: blink 4.6s infinite;
-    transform-origin: 58px 50px;
-  }
-  @keyframes blink {
-    0%, 94%, 100% { transform: scaleY(1); }
-    96.5% { transform: scaleY(0.08); }
+  .cat-l2d {
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
   }
   .nest-label {
     font-size: 0.8rem;
     color: var(--muted);
     display: flex;
     gap: 10px;
+    align-items: center;
+  }
+  .stage {
+    font-family: var(--font-hand);
+    color: var(--accent-2);
+    letter-spacing: 0.08em;
   }
   .visits {
-    color: var(--accent-2);
+    opacity: 0.85;
+  }
+  .nest-progress {
+    width: 132px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    overflow: hidden;
+  }
+  .nest-progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 1.2s var(--ease-water);
   }
 </style>
 
 <script>
   import { catnest } from '../scripts/catnest';
-  const STAGES = [
-    { min: 1, name: '初来乍到' },
-    { min: 3, name: '纸箱安家' },
-    { min: 5, name: '软垫伺候' },
-    { min: 10, name: '抱枕毛线' },
-    { min: 20, name: '挂灯挂牌' },
-    { min: 40, name: '满级猫窝' },
-  ];
+  import { CAT_NEST_STAGES } from '../consts';
+
   const visits = catnest.countVisit();
-  const stage = [...STAGES].reverse().find((s) => visits >= s.min) ?? STAGES[0];
+  const stage = [...CAT_NEST_STAGES].reverse().find((s) => visits >= s.min) ?? CAT_NEST_STAGES[0];
   const el = document.querySelector('[data-nest-stage]');
   const v = document.querySelector('[data-nest-visits]');
   if (el) el.textContent = `猫窝 · ${stage.name}`;
   if (v) v.textContent = `来访 ${visits} 次`;
+
+  const bar = document.querySelector<HTMLElement>('[data-nest-bar]');
+  if (bar) {
+    const next = CAT_NEST_STAGES.find((s) => s.min > visits);
+    const from = stage.min;
+    const to = next ? next.min : stage.min;
+    const p = next ? Math.min(1, (visits - from) / Math.max(1, to - from)) : 1;
+    bar.style.width = `${Math.round(p * 100)}%`;
+  }
 </script>

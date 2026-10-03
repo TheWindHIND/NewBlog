@@ -1,31 +1,59 @@
 ---
+/**
+ * Now 页 · 今日节目单
+ * 把「在玩/在看/在听」排成一册歌剧节目单：第一幕 / 第二幕 / 第三幕
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Ornament from '../components/Ornament.astro';
+import Live2DCat from '../components/Live2DCat.astro';
 import { getCollection } from 'astro:content';
 
 const entry = (await getCollection('now'))[0];
-const d = entry?.data ?? { playing: [], watching: [], listening: [] };
-const cols = [
-  { title: '🎮 在玩', items: d.playing },
-  { title: '📺 在看', items: d.watching },
-  { title: '🎧 在听', items: d.listening },
+const d = entry?.data ?? { playing: [], watching: [], listening: [], note: undefined, updated: undefined };
+
+const acts = [
+  { no: '第一幕', label: '在玩', icon: 'mask' as const, items: d.playing },
+  { no: '第二幕', label: '在看', icon: 'eye' as const, items: d.watching },
+  { no: '第三幕', label: '在听', icon: 'note' as const, items: d.listening },
 ];
+
+const dateFmt = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+const updated = d.updated ? dateFmt.format(d.updated) : null;
 ---
 
-<BaseLayout title="Now" description="枫最近在玩、在看、在听什么">
+<BaseLayout title="Now" description="枫最近在玩、在看、在听什么——一册不定期更换的节目单">
   <section class="container">
-    <h1 class="page-title">🌊 Now</h1>
-    <p class="sub">最近的状态——水面的波纹，更新不算准时。</p>
+    <header class="playbill">
+      <p class="pb-kicker">TODAY'S PROGRAMME</p>
+      <h1 class="pb-title">今日节目单</h1>
+      <p class="pb-sub">枫丹歌剧院 · 猫窝分场</p>
+      <span class="pb-divider" aria-hidden="true">
+        <i></i><Icon name="drop" size={14} /><i></i>
+      </span>
+    </header>
 
-    <div class="cols">
+    <div class="acts">
       {
-        cols.map((c) => (
-          <section class="col">
-            <h2>{c.title}</h2>
-            <ul>
-              {c.items.length > 0 ? (
-                c.items.map((item) => <li>{item}</li>)
+        acts.map((a) => (
+          <section class="act">
+            <div class="act-head">
+              <span class="act-no">{a.no}</span>
+              <span class="act-icon"><Icon name={a.icon} size={16} /></span>
+              <h2 class="act-label">{a.label}</h2>
+            </div>
+            <ul class="playlist">
+              {a.items.length > 0 ? (
+                a.items.map((item, i) => (
+                  <li>
+                    <span class="no">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="name">{item}</span>
+                    <span class="leader" aria-hidden="true"></span>
+                    <Icon name="bubble" size={13} />
+                  </li>
+                ))
               ) : (
-                <li class="empty">暂时空着，猫在休息</li>
+                <li class="empty">这一幕暂时空着——猫在后台打盹。</li>
               )}
             </ul>
           </section>
@@ -33,52 +61,214 @@ const cols = [
       }
     </div>
 
-    <p class="note">更新不算准时——猫睡着的时候，这个页面就是静止的。</p>
+    <Ornament motif="note" label="幕间" />
+
+    <div class="epilogue">
+      <Live2DCat size="clamp(110px, 15vw, 150px)" />
+      <div class="epi-text">
+        {d.note && <p class="epi-note">「{d.note}」</p>}
+        <p class="epi-meta">
+          {updated ? `上一版节目单更新于 ${updated}` : '尚未标注更新日期'}
+          <span class="dot">·</span>
+          <span class="hint">改 <code>src/content/now/now.md</code> 即可换幕</span>
+        </p>
+      </div>
+    </div>
   </section>
 </BaseLayout>
 
 <style>
   .container {
-    padding-block: 44px 20px;
-    max-width: 860px;
+    padding-block: 40px 20px;
+    max-width: 880px;
   }
-  .page-title {
-    font-size: 1.7rem;
-  }
-  .sub {
-    color: var(--muted);
-    margin: 8px 0 28px;
-  }
-  .cols {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-  }
-  .col {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+
+  /* ---------- 节目单页头 ---------- */
+  .playbill {
+    text-align: center;
+    padding: 30px 22px 26px;
+    position: relative;
+    border: 1px solid var(--frame-line);
     border-radius: var(--radius-lg);
-    padding: 20px 22px;
+    background:
+      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
+      var(--bg-card);
   }
-  .col h2 {
-    font-size: 1.05rem;
-    color: var(--accent);
+  .playbill::before,
+  .playbill::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--ornament);
+    border-radius: calc(var(--radius-lg) - 7px);
+    opacity: 0.32;
+    pointer-events: none;
   }
-  .col ul {
-    margin: 12px 0 0;
-    padding-left: 1.2em;
-    display: grid;
-    gap: 6px;
-    font-size: 0.94rem;
+  .playbill::after {
+    inset: 11px;
+    opacity: 0.16;
   }
-  .empty {
+  .pb-kicker {
+    font-size: 0.7rem;
+    letter-spacing: 0.46em;
+    text-indent: 0.46em;
     color: var(--muted);
-    list-style: none;
-    margin-left: -1.2em;
   }
-  .note {
-    margin-top: 34px;
+  .pb-title {
+    margin-top: 10px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.7rem, 5vw, 2.5rem);
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+  .pb-sub {
+    margin-top: 8px;
+    font-size: 0.84rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .pb-divider {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-2);
+  }
+  .pb-divider i {
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+  }
+  .pb-divider i:last-child {
+    background: linear-gradient(90deg, var(--ornament), transparent);
+  }
+
+  /* ---------- 幕次 ---------- */
+  .acts {
+    margin-top: 40px;
+    display: grid;
+    gap: 26px;
+  }
+  .act {
+    border-left: 2px solid var(--ornament);
+    padding-left: 18px;
+    position: relative;
+  }
+  .act::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2-soft);
+  }
+  .act-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .act-no {
+    font-family: var(--font-hand);
+    font-size: 0.8rem;
+    letter-spacing: 0.24em;
+    color: var(--accent-2);
+  }
+  .act-icon {
+    color: var(--accent);
+    align-self: center;
+  }
+  .act-label {
+    font-size: 1.12rem;
+    letter-spacing: 0.16em;
+  }
+
+  .playlist {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+    display: grid;
+    gap: 2px;
+  }
+  .playlist li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 2px;
+    border-radius: 8px;
+    transition: background 0.25s, padding-left 0.25s var(--ease-water);
+  }
+  .playlist li:not(.empty):hover {
+    background: var(--accent-soft);
+    padding-left: 8px;
+  }
+  .playlist .no {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--accent-2);
+    opacity: 0.85;
+  }
+  .playlist .name {
+    font-size: 0.98rem;
+    color: var(--text-strong);
+  }
+  .playlist .leader {
+    flex: 1;
+    height: 1px;
+    background-image: radial-gradient(circle, var(--ornament) 1px, transparent 1px);
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
+    opacity: 0.55;
+  }
+  .playlist li > svg {
+    color: var(--accent);
+    opacity: 0.5;
+  }
+  .playlist .empty {
     color: var(--muted);
     font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  /* ---------- 尾声 ---------- */
+  .epilogue {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+  }
+  .epi-note {
+    font-family: var(--font-hand);
+    font-size: 1.02rem;
+    color: var(--accent);
+  }
+  .epi-meta {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .epi-meta .dot {
+    margin-inline: 8px;
+  }
+  .epi-meta code {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  @media (max-width: 620px) {
+    .epilogue {
+      flex-direction: column;
+      text-align: center;
+      gap: 8px;
+    }
   }
 </style>

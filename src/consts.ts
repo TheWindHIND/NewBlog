@@ -32,14 +32,14 @@ export const CAT_NEST_STAGES = [
   { min: 40, name: '满级猫窝', desc: '猫窝盛况空前，猫已睡翻' },
 ];
 
-/** 成就徽章定义 */
+/** 成就徽章定义（icon 用于 toast 表情，glyph 用于页面内的芙宁娜风 SVG 图标） */
 export const ACHIEVEMENTS = [
-  { id: 'first-visit', name: '初来乍到', desc: '第一次推开猫窝的门', icon: '🐾' },
-  { id: 'regular', name: '常客', desc: '回访 5 次，猫记住了你', icon: '🐱' },
-  { id: 'nest-full', name: '猫窝满员', desc: '回访 40 次，满级猫窝', icon: '🏆' },
-  { id: 'first-feed', name: '第一罐猫粮', desc: '第一次投喂成功', icon: '🥫' },
-  { id: 'reader-1', name: '读书猫', desc: '读完第一篇文章', icon: '📖' },
-  { id: 'reader-10', name: '博学猫', desc: '读完 10 篇文章', icon: '🎓' },
-  { id: 'stargazer', name: '观星者', desc: '到访过星空猫座', icon: '✨' },
-  { id: 'lost-cat', name: '迷路的猫', desc: '遇见了 404 页的猫', icon: '🌀' },
+  { id: 'first-visit', name: '初来乍到', desc: '第一次推开猫窝的门', icon: '🐾', glyph: 'cat' as const },
+  { id: 'regular', name: '常客', desc: '回访 5 次，猫记住了你', icon: '🐱', glyph: 'star' as const },
+  { id: 'nest-full', name: '猫窝满员', desc: '回访 40 次，满级猫窝', icon: '🏆', glyph: 'shell' as const },
+  { id: 'first-feed', name: '第一罐猫粮', desc: '第一次投喂成功', icon: '🥫', glyph: 'drop' as const },
+  { id: 'reader-1', name: '读书猫', desc: '读完第一篇文章', icon: '📖', glyph: 'quill' as const },
+  { id: 'reader-10', name: '博学猫', desc: '读完 10 篇文章', icon: '🎓', glyph: 'mask' as const },
+  { id: 'stargazer', name: '观星者', desc: '到访过星空猫座', icon: '✨', glyph: 'star' as const },
+  { id: 'lost-cat', name: '迷路的猫', desc: '遇见了 404 页的猫', icon: '🌀', glyph: 'wave' as const },
 ];

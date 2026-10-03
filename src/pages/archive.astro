@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StarMap from '../components/StarMap.astro';
+import Playbill from '../components/Playbill.astro';
 import { getCollection } from 'astro:content';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
@@ -25,8 +26,12 @@ for (const p of posts) {
 
 <BaseLayout title="星空猫座" description="全部文章的星图归档——每篇文章都是一颗星。">
   <section class="container">
-    <h1 class="page-title">✦ 星空猫座</h1>
-    <p class="sub">每篇文章都是一颗星，按年份连成星座。共 {posts.length} 颗星在你头顶闪烁。</p>
+    <Playbill
+      kicker="THE CONSTELLATION"
+      title="星空猫座"
+      sub={`每篇文章都是一颗星，按年份连成星座。共 ${posts.length} 颗星在你头顶闪烁。`}
+      motif="star"
+    />
 
     <StarMap stars={stars} />
 
@@ -56,14 +61,7 @@ for (const p of posts) {
 
 <style>
   .container {
-    padding-block: 44px 20px;
-  }
-  .page-title {
-    font-size: 1.7rem;
-  }
-  .sub {
-    color: var(--muted);
-    margin: 8px 0 24px;
+    padding-block: 40px 20px;
   }
   .list-view {
     margin-top: 24px;

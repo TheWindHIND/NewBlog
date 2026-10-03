@@ -81,6 +81,20 @@ export const catnest = {
     return jget<string[]>(K.read, []).length;
   },
 
+  /** 所有文章累计投喂的猫粮数 */
+  totalFeed(): number {
+    let sum = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(K.feedPrefix)) {
+          sum += Number(localStorage.getItem(key) ?? 0) || 0;
+        }
+      }
+    } catch {}
+    return sum;
+  },
+
   unlock,
 
   achievements(): string[] {

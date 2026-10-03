@@ -1,0 +1,307 @@
+---
+/**
+ * 猫房间：猫窝养成的主场
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CatRoom from '../components/CatRoom.astro';
+import Icon from '../components/Icon.astro';
+import Ornament from '../components/Ornament.astro';
+import { CAT_NEST_STAGES } from '../consts';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<BaseLayout title="猫房间" description="回访越多，这间猫房间就越齐全——全部数据只存在你自己的浏览器里">
+  <section class="container">
+    <header class="playbill">
+      <p class="pb-kicker">THE CAT'S ROOM</p>
+      <h1 class="pb-title">猫房间</h1>
+      <p class="pb-sub">你来得越多，这里就越像个家</p>
+      <span class="pb-divider" aria-hidden="true">
+        <i></i><Icon name="cat" size={16} /><i></i>
+      </span>
+    </header>
+
+    <CatRoom />
+
+    <div class="status" data-status>
+      <p class="status-line">
+        <span class="k">当前进度</span>
+        <strong data-status-stage>—</strong>
+        <span class="sep">·</span>
+        <span class="k">来访</span>
+        <strong data-status-visits>0</strong>
+        <span class="k">次</span>
+      </p>
+      <p class="status-next" data-status-next>再回访几次，房间里就会多出新的东西。</p>
+      <div class="bar" aria-hidden="true"><span data-status-bar></span></div>
+      <p class="status-feed">
+        累计投喂猫粮 <strong data-room-feed>0</strong> 粒 —— 谢谢你。
+      </p>
+    </div>
+
+    <Ornament motif="cat" label="添置清单" />
+
+    <ol class="unlocks">
+      {
+        CAT_NEST_STAGES.map((s, i) => (
+          <li data-need={s.min}>
+            <span class="no">第 {i + 1} 幕</span>
+            <div class="u-body">
+              <div class="u-head">
+                <strong>{s.name}</strong>
+                <span class="need">{s.min} 次回访</span>
+              </div>
+              <p>{s.desc}</p>
+            </div>
+            <span class="state" data-state>未解锁</span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="fineprint">
+      以上记录全部保存在你自己的浏览器（localStorage），不会上传到任何服务器；
+      清空浏览器数据就会重新开始。
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .container {
+    padding-block: 40px 20px;
+    max-width: 900px;
+  }
+
+  .playbill {
+    text-align: center;
+    padding: 26px 22px 22px;
+    position: relative;
+    border: 1px solid var(--frame-line);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
+      var(--bg-card);
+    margin-bottom: 24px;
+  }
+  .playbill::before,
+  .playbill::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--ornament);
+    border-radius: calc(var(--radius-lg) - 7px);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .playbill::after {
+    inset: 11px;
+    opacity: 0.16;
+  }
+  .pb-kicker {
+    font-size: 0.7rem;
+    letter-spacing: 0.46em;
+    text-indent: 0.46em;
+    color: var(--muted);
+  }
+  .pb-title {
+    margin-top: 10px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
+  }
+  .pb-sub {
+    margin-top: 8px;
+    font-size: 0.84rem;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+  .pb-divider {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-2);
+  }
+  .pb-divider i {
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+  }
+  .pb-divider i:last-child {
+    background: linear-gradient(90deg, var(--ornament), transparent);
+  }
+
+  /* 状态条 */
+  .status {
+    margin-top: 20px;
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+  }
+  .status-line {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.92rem;
+  }
+  .status-line .k {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .status-line strong {
+    color: var(--accent);
+    font-size: 1.02rem;
+  }
+  .status-line .sep {
+    color: var(--ornament);
+  }
+  .status-next {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .bar {
+    margin-top: 12px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    overflow: hidden;
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 1.3s var(--ease-water);
+  }
+  .status-feed {
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .status-feed strong {
+    color: var(--accent-2);
+  }
+
+  /* 添置清单 */
+  .unlocks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .unlocks li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    transition: border-color 0.35s, background 0.35s;
+  }
+  .unlocks li.reached {
+    border-color: var(--border-strong);
+    background: var(--accent-soft);
+  }
+  .unlocks .no {
+    font-family: var(--font-hand);
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    flex: none;
+    width: 4.2em;
+  }
+  .unlocks li.reached .no {
+    color: var(--accent);
+  }
+  .u-body {
+    flex: 1;
+  }
+  .u-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .u-head strong {
+    font-size: 1rem;
+    color: var(--text-strong);
+  }
+  .u-head .need {
+    font-size: 0.72rem;
+    color: var(--accent-2);
+    background: var(--accent-2-soft);
+    padding: 1px 9px;
+    border-radius: 999px;
+  }
+  .u-body p {
+    margin-top: 5px;
+    font-size: 0.86rem;
+    color: var(--muted);
+  }
+  .state {
+    flex: none;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    padding: 3px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .unlocks li.reached .state {
+    color: var(--accent);
+    border-color: var(--border-strong);
+    background: var(--bg-card);
+  }
+  .fineprint {
+    margin-top: 30px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.9;
+  }
+</style>
+
+<script>
+  import { catnest } from '../scripts/catnest';
+  import { CAT_NEST_STAGES } from '../consts';
+
+  const visits = catnest.countVisit();
+  const stage =
+    [...CAT_NEST_STAGES].reverse().find((s) => visits >= s.min) ?? CAT_NEST_STAGES[0];
+  const next = CAT_NEST_STAGES.find((s) => s.min > visits);
+
+  const set = (sel: string, text: string) => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = text;
+  };
+  set('[data-status-stage]', `第 ${CAT_NEST_STAGES.indexOf(stage) + 1} 幕 · ${stage.name}`);
+  set('[data-status-visits]', String(visits));
+  set(
+    '[data-status-next]',
+    next
+      ? `再回访 ${next.min - visits} 次，房间里会多出「${next.name}」。`
+      : '这间猫房间已经盛况空前了——猫已经睡翻。'
+  );
+
+  const bar = document.querySelector<HTMLElement>('[data-status-bar]');
+  if (bar) {
+    const p = next ? Math.min(1, (visits - stage.min) / Math.max(1, next.min - stage.min)) : 1;
+    bar.style.width = `${Math.round(p * 100)}%`;
+  }
+
+  document.querySelectorAll<HTMLElement>('.unlocks li[data-need]').forEach((li) => {
+    const need = Number(li.dataset.need ?? '0');
+    const reached = visits >= need;
+    li.classList.toggle('reached', reached);
+    const st = li.querySelector('[data-state]');
+    if (st) st.textContent = reached ? '已解锁' : `还需 ${need - visits} 次`;
+  });
+</script>

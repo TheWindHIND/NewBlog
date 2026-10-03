@@ -1,0 +1,213 @@
+---
+/**
+ * 芙宁娜猫猫 · 伪 Live2D
+ * 三层立绘：尾巴（底）→ 身体 → 头（顶），各自独立变换
+ *  · 头部：视线跟随鼠标、呼吸微浮、随机歪头
+ *  · 眨眼：睁眼/闭眼两张头部图层交叉淡入（真·眨眼而非画眼睑）
+ *  · 尾巴：常态慢摆；投喂/解锁成就时快速摆动
+ * 无 JS 时退化为静态立绘，内容不受影响。
+ */
+interface Props {
+  /** 显示宽度，如 'clamp(150px, 20vw, 220px)' */
+  size?: string;
+  class?: string;
+  /** 是否在页面加载后立刻触发一次「欢迎」摆动 */
+  greet?: boolean;
+}
+
+const { size = 'clamp(140px, 18vw, 200px)', class: cls = '', greet = false } = Astro.props;
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const src = (n: string) => `${B}/images/cat/${n}`;
+---
+
+<div
+  class:list={['l2d-cat', cls]}
+  data-live2d-cat
+  data-greet={greet ? '1' : undefined}
+  style={`--cat-w:${size}`}
+  role="img"
+  aria-label="芙宁娜猫猫吉祥物"
+>
+  <div class="stage" data-cat-stage>
+    <!-- 尾巴（最底层，从身体后方伸出） -->
+    <img class="layer tail" src={src('aylen-tail.webp')} alt="" aria-hidden="true"
+      width="760" height="1053" decoding="async" data-cat-tail />
+
+    <!-- 身体 -->
+    <img class="layer body" src={src('aylen-body.webp')} alt="" aria-hidden="true"
+      width="760" height="1053" decoding="async" data-cat-body />
+
+    <!-- 头（睁眼 / 闭眼交叉淡入） -->
+    <div class="head-wrap" data-cat-head>
+      <img class="layer head" src={src('aylen-head.webp')} alt="" aria-hidden="true"
+        width="760" height="1053" decoding="async" data-cat-head-open />
+      <img class="layer head closed" src={src('aylen-head-closed.webp')} alt="" aria-hidden="true"
+        width="760" height="1053" decoding="async" data-cat-head-closed />
+    </div>
+  </div>
+</div>
+
+<style>
+  .l2d-cat {
+    width: var(--cat-w);
+    /* 立绘原始比例 760 x 1053 */
+    aspect-ratio: 760 / 1053;
+    position: relative;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .stage {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 96%;
+    /* 呼吸：整体极轻微的纵向起伏 */
+    animation: cat-breathe 4.6s var(--ease-water) infinite;
+  }
+  .layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* 尾巴：绕与身体的交界处旋转 */
+  .tail {
+    transform-origin: 74% 76.5%;
+    animation: tail-wag 3.6s var(--ease-water) infinite;
+    z-index: 1;
+  }
+  .l2d-cat.happy .tail {
+    animation: tail-wag-fast 0.62s var(--ease-water) infinite;
+  }
+
+  /* 身体：跟随鼠标做极轻微的侧倾 */
+  .body {
+    transform-origin: 50% 92%;
+    transition: transform 0.9s var(--ease-water);
+    z-index: 2;
+  }
+
+  /* 头：视线跟随 + 歪头，轴心在脖子的位置 */
+  .head-wrap {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 47%;
+    transition: transform 0.55s var(--ease-water);
+    z-index: 3;
+  }
+  .head.closed {
+    opacity: 0;
+    transition: opacity 0.07s linear;
+  }
+  .l2d-cat.blinking .head.closed {
+    opacity: 1;
+  }
+
+  @keyframes cat-breathe {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50% { transform: translateY(-0.6%) scaleY(1.012); }
+  }
+  @keyframes tail-wag {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(7deg); }
+  }
+  @keyframes tail-wag-fast {
+    0%, 100% { transform: rotate(-12deg); }
+    50% { transform: rotate(16deg); }
+  }
+
+  /* 降级：不动 */
+  @media (prefers-reduced-motion: reduce) {
+    .stage, .tail, .l2d-cat.happy .tail {
+      animation: none !important;
+    }
+    .body, .head-wrap {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  type CatState = { wag: (ms?: number) => void };
+
+  const instances = [...document.querySelectorAll<HTMLElement>('[data-live2d-cat]')];
+  if (instances.length === 0) {
+    // 无实例
+  } else {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const cats = instances.map((root) => {
+      const stage = root.querySelector<HTMLElement>('[data-cat-stage]');
+      const head = root.querySelector<HTMLElement>('[data-cat-head]');
+      const body = root.querySelector<HTMLElement>('[data-cat-body]');
+      return { root, stage, head, body };
+    });
+
+    // ---- 视线跟随：鼠标偏移 → 头部微转 + 身体轻微侧倾 ----
+    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+    const smooth = () => {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      for (const c of cats) {
+        if (!c.head || !c.body) continue;
+        c.head.style.transform =
+          `translate(${(cx * 1.6).toFixed(2)}%, ${(cy * 0.8).toFixed(2)}%) ` +
+          `rotate(${(cx * 4.2).toFixed(2)}deg)`;
+        c.body.style.transform =
+          `translateX(${(cx * 0.9).toFixed(2)}%) rotate(${(cx * 1.1).toFixed(2)}deg)`;
+      }
+      if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
+        raf = requestAnimationFrame(smooth);
+      } else {
+        raf = 0;
+      }
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(smooth); };
+
+    if (!reduced) {
+      addEventListener('pointermove', (e) => {
+        const nx = (e.clientX / innerWidth) * 2 - 1;
+        const ny = (e.clientY / innerHeight) * 2 - 1;
+        tx = Math.max(-1, Math.min(1, nx));
+        ty = Math.max(-1, Math.min(1, ny));
+        kick();
+      }, { passive: true });
+      // 鼠标离开窗口 → 回中
+      addEventListener('blur', () => { tx = 0; ty = 0; kick(); });
+
+      // ---- 眨眼：随机间隔，偶尔连眨两下 ----
+      const blinkOnce = (cat: (typeof cats)[number]) => {
+        cat.root.classList.add('blinking');
+        setTimeout(() => cat.root.classList.remove('blinking'), 110);
+      };
+      setInterval(() => {
+        for (const c of cats) {
+          if (Math.random() < 0.75) blinkOnce(c);
+        }
+        if (Math.random() < 0.18) {
+          setTimeout(() => cats.forEach(blinkOnce), 230);
+        }
+      }, 3600);
+    }
+
+    // ---- 对外 API：投喂 / 成就时快速摆尾 ----
+    let happyTimer: ReturnType<typeof setTimeout> | undefined;
+    const wag: CatState['wag'] = (ms = 2600) => {
+      for (const c of cats) c.root.classList.add('happy');
+      clearTimeout(happyTimer);
+      happyTimer = setTimeout(() => {
+        for (const c of cats) c.root.classList.remove('happy');
+      }, ms);
+    };
+    (window as unknown as { aylenCat?: CatState }).aylenCat = { wag };
+
+    addEventListener('catnest:achievement', () => wag(2200));
+    addEventListener('aylen:feed', () => wag(2600));
+
+    // 打招呼
+    if (!reduced && cats.some((c) => c.root.dataset.greet === '1')) {
+      setTimeout(() => wag(2000), 700);
+    }
+  }
+</script>

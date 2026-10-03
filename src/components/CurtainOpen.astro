@@ -1,0 +1,194 @@
+---
+/**
+ * 文章页 · 歌剧开幕
+ * 进入文章时两侧幕布合拢，随后左右拉开，聚光灯打在剧目牌上——
+ * 把「打开一篇文章」变成「看一场演出」。可点击 / 滚动 / 按键提前跳过。
+ */
+interface Props {
+  /** 剧目牌上的文字，一般是文章标题 */
+  title: string;
+  /** 场次编号，如「第 3 幕」 */
+  act?: string;
+}
+
+const { title, act = '本场剧目' } = Astro.props;
+---
+
+<div class="curtain-open" data-curtain-open aria-hidden="true">
+  <div class="panel panel-l">
+    <span class="fringe"></span>
+  </div>
+  <div class="panel panel-r">
+    <span class="fringe"></span>
+  </div>
+  <div class="plaque" data-plaque>
+    <p class="act">{act}</p>
+    <p class="ptitle">{title}</p>
+    <p class="hint">—— 正在开幕 ——</p>
+  </div>
+</div>
+
+<style>
+  .curtain-open {
+    position: fixed;
+    inset: 0;
+    z-index: 460;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .curtain-open.done {
+    display: none;
+  }
+  /* 跳过时整体淡出 */
+  .curtain-open.skip {
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+
+  .panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 51%;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        var(--curtain-a) 0px,
+        var(--curtain-b) 26px,
+        var(--curtain-a) 54px,
+        var(--curtain-b) 78px,
+        var(--curtain-a) 106px
+      );
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+    transition: transform 1.15s cubic-bezier(0.66, 0, 0.24, 1);
+    will-change: transform;
+  }
+  .panel-l {
+    left: 0;
+    transform: translateX(0);
+  }
+  .panel-r {
+    right: 0;
+    transform: translateX(0);
+  }
+  .curtain-open.open .panel-l {
+    transform: translateX(-101%);
+  }
+  .curtain-open.open .panel-r {
+    transform: translateX(101%);
+  }
+  /* 幕布内缘金边 + 流苏 */
+  .fringe {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--gold-trim) 45%,
+      rgba(255, 255, 255, 0.35) 60%,
+      transparent
+    );
+    opacity: 0.75;
+  }
+  .panel-l .fringe { right: 0; }
+  .panel-r .fringe { left: 0; transform: scaleX(-1); }
+
+  /* 剧目牌 */
+  .plaque {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.94);
+    text-align: center;
+    padding: 26px 44px;
+    border: 1px solid var(--ornament);
+    border-radius: 6px;
+    background: rgba(5, 10, 20, 0.35);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.5s 0.1s, transform 0.6s 0.1s var(--ease-water);
+  }
+  .curtain-open.open .plaque {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .curtain-open.fade .plaque {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+  .plaque .act {
+    font-size: 0.7rem;
+    letter-spacing: 0.44em;
+    text-indent: 0.44em;
+    color: var(--gold-trim);
+  }
+  .plaque .ptitle {
+    margin-top: 12px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.2rem, 3.4vw, 1.9rem);
+    letter-spacing: 0.14em;
+    color: #f4f8ff;
+    max-width: 70vw;
+  }
+  .plaque .hint {
+    margin-top: 14px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: rgba(230, 240, 250, 0.55);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .curtain-open {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  const el = document.querySelector<HTMLElement>('[data-curtain-open]');
+  if (el) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const arriving = document.documentElement.dataset.scene === 'enter';
+    // 水幕刚退场时晚一点开幕，形成「水幕 → 开幕」的连续感
+    const delay = arriving ? 520 : 180;
+    let finished = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const unbind = () => {
+      removeEventListener('wheel', skip);
+      removeEventListener('touchstart', skip);
+      removeEventListener('keydown', skip);
+    };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      timers.forEach(clearTimeout);
+      unbind();
+      el.remove();
+    };
+    const skip = () => {
+      if (finished) return;
+      finished = true;
+      timers.forEach(clearTimeout);
+      unbind();
+      el.classList.add('skip');
+      setTimeout(() => el.remove(), 320);
+    };
+
+    if (reduced) {
+      skip();
+    } else {
+      timers.push(setTimeout(() => el.classList.add('open'), delay));
+      timers.push(setTimeout(() => el.classList.add('fade'), delay + 900));
+      timers.push(setTimeout(finish, delay + 1500));
+
+      // 用户不耐烦时立刻跳过
+      const opts = { passive: true } as AddEventListenerOptions;
+      addEventListener('wheel', skip, opts);
+      addEventListener('touchstart', skip, opts);
+      addEventListener('keydown', skip, opts);
+    }
+  }
+</script>

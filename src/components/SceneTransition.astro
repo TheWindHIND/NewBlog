@@ -1,0 +1,223 @@
+---
+/**
+ * 页面水幕转场（MPA 版，不依赖路由）
+ *  · 离开：点击站内链接时，一道水幕波浪自下而上漫过整屏
+ *  · 抵达：新页面加载时水幕仍覆盖屏幕，随即继续向上退去，露出新页面
+ *  · 幕布上写着「幕间」报幕词，配水泡装饰
+ * 无 JS 时完全不可见，链接正常跳转。
+ */
+---
+
+<div class="scene-wipe" data-scene-wipe aria-hidden="true">
+  <div class="wipe-body">
+    <svg class="wipe-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path
+        d="M0 62 C 120 20 240 20 360 54 S 600 108 720 66 S 960 12 1080 44 S 1320 96 1440 58 L1440 120 L0 120 Z"
+      />
+    </svg>
+    <div class="wipe-inner">
+      <span class="wipe-bubbles">
+        <i></i><i></i><i></i><i></i><i></i>
+      </span>
+      <span class="wipe-text" data-wipe-text>幕间</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .scene-wipe {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    pointer-events: none;
+    visibility: hidden;
+    overflow: hidden;
+  }
+  .scene-wipe[data-state] {
+    visibility: visible;
+  }
+  /* 抵达状态：由 <html> 上的标记驱动，避免先闪一下页面 */
+  html[data-scene='enter'] .scene-wipe {
+    visibility: visible;
+  }
+
+  .wipe-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 108%;
+    background: linear-gradient(
+      180deg,
+      var(--curtain-b) 0%,
+      var(--curtain-a) 42%,
+      var(--bg) 100%
+    );
+    transform: translateY(102%);
+    will-change: transform;
+  }
+  /* 抵达新页面：初始就覆盖全屏 */
+  html[data-scene='enter'] .wipe-body {
+    transform: translateY(0);
+  }
+  /* 开始退场 / 进场 */
+  .scene-wipe[data-state='out'] .wipe-body {
+    transform: translateY(-108%);
+    transition: transform 0.82s cubic-bezier(0.62, 0.02, 0.28, 1);
+  }
+  html[data-scene='enter'].scene-go .wipe-body {
+    transform: translateY(-108%);
+    transition: transform 0.82s cubic-bezier(0.62, 0.02, 0.28, 1);
+  }
+  .scene-wipe[data-state='in'] .wipe-body {
+    transform: translateY(0);
+    transition: transform 0.62s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .wipe-wave {
+    position: absolute;
+    top: -58px;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: block;
+  }
+  .wipe-wave path {
+    fill: var(--curtain-b);
+  }
+  /* 抵达时波浪在下方不需要 */
+  html[data-scene='enter'] .wipe-wave {
+    opacity: 0;
+  }
+
+  .wipe-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+  }
+  .wipe-text {
+    font-family: var(--font-hand);
+    font-size: clamp(1.4rem, 4vw, 2.4rem);
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.3s 0.18s;
+  }
+  .scene-wipe[data-state='in'] .wipe-text {
+    opacity: 0.9;
+  }
+  .wipe-bubbles {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    height: 30px;
+    opacity: 0;
+    transition: opacity 0.3s 0.24s;
+  }
+  .scene-wipe[data-state='in'] .wipe-bubbles {
+    opacity: 0.75;
+  }
+  .wipe-bubbles i {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    animation: bub-rise 1.6s var(--ease-water) infinite;
+  }
+  .wipe-bubbles i:nth-child(2) { width: 6px; height: 6px; animation-delay: 0.18s; }
+  .wipe-bubbles i:nth-child(3) { width: 14px; height: 14px; animation-delay: 0.36s; }
+  .wipe-bubbles i:nth-child(4) { width: 8px; height: 8px; animation-delay: 0.54s; }
+  .wipe-bubbles i:nth-child(5) { width: 11px; height: 11px; animation-delay: 0.72s; }
+  @keyframes bub-rise {
+    0% { transform: translateY(12px) scale(0.6); opacity: 0; }
+    40% { opacity: 1; }
+    100% { transform: translateY(-18px) scale(1); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene-wipe {
+      display: none !important;
+    }
+  }
+</style>
+
+<script is:inline>
+  // 进场：把「正在抵达」状态尽早挂到 <html> 上，避免页面先闪一下
+  (() => {
+    try {
+      if (sessionStorage.getItem('catnest.wipe') === '1') {
+        sessionStorage.removeItem('catnest.wipe');
+        document.documentElement.dataset.scene = 'enter';
+      }
+    } catch {}
+  })();
+</script>
+
+<script>
+  const KEY = 'catnest.wipe';
+  const wipe = document.querySelector<HTMLElement>('[data-scene-wipe]');
+  const label = document.querySelector<HTMLElement>('[data-wipe-text]');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // —— 抵达新页面：水幕继续向上退去 ——
+  if (document.documentElement.dataset.scene === 'enter' && wipe) {
+    // 两帧后再启动过渡，确保初始「覆盖」状态已绘制
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.add('scene-go');
+        setTimeout(() => {
+          delete document.documentElement.dataset.scene;
+          document.documentElement.classList.remove('scene-go');
+        }, 900);
+      });
+    });
+  }
+
+  // —— 离开：拦截站内链接，先放水幕再跳转 ——
+  let leaving = false;
+  document.addEventListener('click', (e) => {
+    if (reduced || leaving) return;
+    if (e.defaultPrevented || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = (e.target as HTMLElement)?.closest?.('a') as HTMLAnchorElement | null;
+    if (!a || !a.href) return;
+    if (a.target && a.target !== '_self') return;
+    if (a.hasAttribute('download') || a.dataset.noWipe !== undefined) return;
+
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin) return;
+    // 同页锚点不转场
+    if (url.pathname === location.pathname && url.search === location.search) return;
+
+    e.preventDefault();
+    leaving = true;
+    if (label) label.textContent = '幕间';
+
+    const finish = () => {
+      try {
+        sessionStorage.setItem(KEY, '1');
+      } catch {}
+      location.href = url.href;
+    };
+
+    if (wipe) {
+      wipe.dataset.state = 'in';
+      setTimeout(finish, 600);
+    } else {
+      finish();
+    }
+  });
+
+  // 前进/后退恢复缓存页时，清掉残留的覆盖状态
+  addEventListener('pageshow', (e) => {
+    if ((e as PageTransitionEvent).persisted && wipe) {
+      delete wipe.dataset.state;
+    }
+  });
+</script>

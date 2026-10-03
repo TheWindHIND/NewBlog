@@ -19,6 +19,10 @@
   /* 动效 */
   --ease-water: cubic-bezier(0.22, 0.9, 0.36, 1);
   --dur-theme: 0.7s;
+
+  /* 歌剧院舞台（全站通用，随主题换色） */
+  --stage-edge: 46px;      /* 两侧幕布宽度 */
+  --gold-trim: #e8c87a;
 }
 
 /* ---------- 夜 · 荒 Ousia ---------- */
@@ -48,6 +52,22 @@
   /* 芒 = 金（瞳左）荒 = 蓝（瞳右）→ 荒主题下按钮左蓝右金对调强调当前态 */
   --eye-current: #5bc0e8;
   --eye-other: #e8c87a;
+
+  /* 夜场天鹅绒幕布（深海绸缎） */
+  --curtain-a: #0d1a30;
+  --curtain-b: #1b3055;
+  --curtain-fold: rgba(91, 192, 232, 0.1);
+  --spot: rgba(120, 205, 245, 0.16);
+  --ornament: rgba(232, 200, 122, 0.55);
+  --frame-line: rgba(91, 192, 232, 0.16);
+
+  /* 猫房间（夜） */
+  --room-wall: #16243c;
+  --room-wall-2: #1b2c48;
+  --room-floor: #0f1b2e;
+  --room-wood: #2b4364;
+  --room-glow: rgba(91, 192, 232, 0.14);
+  --room-water: #5bc0e8;
 }
 
 /* ---------- 昼 · 芒 Pneuma ---------- */
@@ -76,4 +96,20 @@
 
   --eye-current: #d4a94f;
   --eye-other: #3fa7d6;
+
+  /* 昼场幕布（香槟金绸缎） */
+  --curtain-a: #f3e6c6;
+  --curtain-b: #e2caa0;
+  --curtain-fold: rgba(212, 169, 79, 0.16);
+  --spot: rgba(255, 244, 214, 0.55);
+  --ornament: rgba(180, 138, 52, 0.6);
+  --frame-line: rgba(212, 169, 79, 0.22);
+
+  /* 猫房间（昼） */
+  --room-wall: #fbf5e8;
+  --room-wall-2: #f3e9d6;
+  --room-floor: #e0cfa9;
+  --room-wood: #c3a373;
+  --room-glow: rgba(212, 169, 79, 0.18);
+  --room-water: #4fb8e0;
 }

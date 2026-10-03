@@ -1,0 +1,76 @@
+---
+/**
+ * 芙宁娜风分隔纹样：两侧水波纹 + 中间主题小图
+ * 用在各页面区块之间，替代生硬的 <hr>
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  /** 中间的小图 */
+  motif?: 'hat' | 'mask' | 'note' | 'drop' | 'bubble' | 'cat' | 'star' | 'quill' | 'curtain' | 'shell' | 'eye' | 'wave';
+  /** 小图旁的文字（可选） */
+  label?: string;
+  class?: string;
+}
+
+const { motif = 'drop', label, class: cls = '' } = Astro.props;
+---
+
+<div class:list={['ornament', cls]} role="separator" aria-hidden={label ? undefined : 'true'}>
+  <span class="wave wave-l">
+    <svg viewBox="0 0 120 14" preserveAspectRatio="none">
+      <path d="M0 7 C10 1 20 1 30 7 S50 13 60 7 S80 1 90 7 S110 13 120 7" />
+    </svg>
+  </span>
+  <span class="motif">
+    <Icon name={motif} size={17} />
+    {label && <em>{label}</em>}
+  </span>
+  <span class="wave wave-r">
+    <svg viewBox="0 0 120 14" preserveAspectRatio="none">
+      <path d="M0 7 C10 1 20 1 30 7 S50 13 60 7 S80 1 90 7 S110 13 120 7" />
+    </svg>
+  </span>
+</div>
+
+<style>
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-block: 34px;
+    color: var(--ornament, var(--accent-2));
+  }
+  .wave {
+    flex: 1;
+    min-width: 24px;
+    height: 14px;
+    opacity: 0.55;
+  }
+  .wave svg {
+    width: 100%;
+    height: 100%;
+  }
+  .wave path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+  }
+  .wave-r {
+    transform: scaleX(-1);
+  }
+  .motif {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    opacity: 0.9;
+  }
+  .motif em {
+    font-family: var(--font-hand);
+    font-style: normal;
+    font-size: 0.85rem;
+    letter-spacing: 0.22em;
+    white-space: nowrap;
+  }
+</style>

@@ -3,6 +3,8 @@ import '../styles/tokens.css';
 import '../styles/base.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import StageFrame from '../components/StageFrame.astro';
+import SceneTransition from '../components/SceneTransition.astro';
 import { SITE, ACHIEVEMENTS } from '../consts';
 
 interface Props {
@@ -53,11 +55,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
   </head>
   <body>
+    <StageFrame />
     <Header />
     <main>
       <slot />
     </main>
     <Footer />
+    <SceneTransition />
 
     <!-- 成就解锁 toast -->
     <script is:inline type="application/json" set:html={JSON.stringify(ACHIEVEMENTS)} data-ach-data />

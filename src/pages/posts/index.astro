@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/PostCard.astro';
+import Playbill from '../../components/Playbill.astro';
+import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
@@ -17,12 +19,21 @@ for (const p of posts) {
 
 <BaseLayout title="文章" description="藏枫的猫窝的全部文章，按年份归档。">
   <section class="container">
-    <h1 class="page-title">文章 <span class="count">共 {posts.length} 篇</span></h1>
+    <Playbill
+      kicker="ALL ARTICLES"
+      title="全部剧目"
+      sub={`共 ${posts.length} 篇 · 按年份分幕`}
+      motif="quill"
+    />
 
     {
       [...byYear.entries()].map(([year, list]) => (
         <section class="year-group">
-          <h2 class="year">{year}</h2>
+          <h2 class="year">
+            <Icon name="curtain" size={15} />
+            <span>{year}</span>
+            <em>{list.length} 篇</em>
+          </h2>
           <div class="grid">
             {list.map((post) => (
               <PostCard post={post} />
@@ -36,25 +47,43 @@ for (const p of posts) {
 
 <style>
   .container {
-    padding-block: 44px 20px;
-  }
-  .page-title {
-    font-size: 1.7rem;
-  }
-  .count {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--muted);
-    margin-left: 10px;
+    padding-block: 40px 20px;
   }
   .year-group {
-    margin-top: 36px;
+    margin-top: 38px;
   }
   .year {
-    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.05rem;
     color: var(--accent);
     font-family: var(--font-hand);
     letter-spacing: 0.2em;
+  }
+  .year::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ornament), transparent);
+    opacity: 0.55;
+  }
+  .year em {
+    font-style: normal;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    order: 3;
+  }
+  .year span {
+    order: 1;
+  }
+  .year svg {
+    order: 0;
+  }
+  .year::after {
+    order: 2;
   }
   .grid {
     margin-top: 16px;
