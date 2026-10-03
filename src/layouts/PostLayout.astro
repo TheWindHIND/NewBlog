@@ -1,6 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import CatTailProgress from '../components/CatTailProgress.astro';
+import SwordProgress from '../components/SwordProgress.astro';
 import FeedButton from '../components/FeedButton.astro';
 import CurtainOpen from '../components/CurtainOpen.astro';
 import type { CollectionEntry } from 'astro:content';
@@ -26,7 +26,7 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 ---
 
 <BaseLayout title={d.title} description={d.description}>
-  <CatTailProgress />
+  <SwordProgress />
   <CurtainOpen
     title={d.title}
     act={d.series && d.seriesIndex ? `${d.series} · 第 ${d.seriesIndex} 幕` : '本场剧目'}

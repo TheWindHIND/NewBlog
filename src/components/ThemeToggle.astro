@@ -1,101 +1,112 @@
 ---
 /**
- * 芙宁娜异色瞳主题切换（正典配色）
- * 左眼：深蓝虹膜 + 浅蓝水滴瞳孔 ｜ 右眼：浅蓝虹膜 + 深蓝水滴瞳孔
- * 左眼代表「昼·芒」，右眼代表「夜·荒」——当前形态一侧发光（水幕过渡见 base.css）
+ * 荒 / 芒 主题切换
+ *  · 图标：寒天之钉（Skyfrost Nail）
+ *      · 荒 Ousia（夜）→ 完整的钉子
+ *      · 芒 Pneuma（昼）→ 碎掉的钉子
+ *    两态同框堆叠，由 data-theme 交叉淡入淡出，无需 JS 参与换图。
+ *    几何见 src/lib/nail-geom.mjs，配色走 --nail-* 变量。
+ *  · 点击时图标转一圈，发光色随当前形态在香槟金 / 深海蓝之间切换
  */
+import { nailSVG } from '../lib/nail-geom.mjs';
+
+const whole = nailSVG('whole');
+const shattered = nailSVG('shattered');
 ---
 
-<button class="theme-toggle" type="button" aria-label="切换荒/芒主题" title="荒 / 芒" data-theme-toggle>
-  <svg viewBox="0 0 64 40" aria-hidden="true">
-    <defs>
-      <!-- 水滴形瞳孔：尖朝上 -->
-      <path id="ct-drop" d="M0 -4.6 C1.8 -2.4 3 0 3 1.8 A3 3 0 1 1 -3 1.8 C-3 0 -1.8 -2.4 0 -4.6 Z" />
-    </defs>
-    <!-- 眼眶 -->
-    <ellipse class="socket" cx="18" cy="20" rx="15" ry="17.5" />
-    <ellipse class="socket" cx="46" cy="20" rx="15" ry="17.5" />
-    <!-- 左眼：深蓝虹膜 + 浅蓝水滴瞳孔 -->
-    <circle class="iris iris-l" cx="18" cy="20" r="10.5" />
-    <use class="pupil pupil-l" href="#ct-drop" x="18" y="20" />
-    <!-- 右眼：浅蓝虹膜 + 深蓝水滴瞳孔 -->
-    <circle class="iris iris-r" cx="46" cy="20" r="10.5" />
-    <use class="pupil pupil-r" href="#ct-drop" x="46" y="20" />
-    <!-- 高光 -->
-    <circle class="glint" cx="14.5" cy="15.5" r="2" />
-    <circle class="glint" cx="42.5" cy="15.5" r="2" />
-    <!-- 当前形态一侧的发光标记（芒=左，荒=右） -->
-    <ellipse class="ring ring-l" cx="18" cy="20" rx="14" ry="16.4" />
-    <ellipse class="ring ring-r" cx="46" cy="20" rx="14" ry="16.4" />
-  </svg>
+<button class="theme-toggle" type="button" aria-label="切换荒/芒主题" title="荒 · 完整的寒天之钉 / 芒 · 碎裂的寒天之钉" data-theme-toggle>
+  <span class="nt-icon" data-nt-icon>
+    <span class="nt-whole"><Fragment set:html={whole} /></span>
+    <span class="nt-shattered"><Fragment set:html={shattered} /></span>
+  </span>
 </button>
 
 <style>
   .theme-toggle {
-    padding: 4px;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
     border-radius: 999px;
-    transition: transform 0.25s var(--ease-water);
+    transition: background-color 0.3s;
   }
   .theme-toggle:hover {
-    transform: scale(1.12) rotate(-6deg);
+    background: var(--bg-soft);
   }
-  .theme-toggle:active {
-    transform: scale(0.95);
+
+  .nt-icon {
+    position: relative;
+    display: block;
+    width: 26px;
+    height: 32px;
+    transition: transform 0.3s var(--ease-water);
+    filter: drop-shadow(0 0 6px var(--toggle-glow));
   }
-  svg {
-    width: 52px;
-    height: 33px;
+  .nt-icon > span {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-water), transform 0.5s var(--ease-water);
+  }
+  .nt-icon :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
     overflow: visible;
   }
-  .socket {
-    fill: var(--bg-soft);
-    stroke: var(--border-strong);
-    stroke-width: 1.5;
-  }
-  /* 正典配色：左深蓝 / 右浅蓝 */
-  .iris-l {
-    fill: #2b5f96;
-  }
-  .iris-r {
-    fill: #7fc9ea;
-  }
-  .pupil-l {
-    fill: #b9e4f7;
-  }
-  .pupil-r {
-    fill: #16324e;
-  }
-  .glint {
-    fill: #fff;
-    opacity: 0.85;
-  }
-  /* 当前形态标记环：芒→左眼，荒→右眼 */
-  .ring {
-    fill: none;
-    stroke-width: 1.8;
-    opacity: 0;
-    transition: opacity 0.4s, filter 0.4s;
-  }
-  .ring-l,
-  .ring-r {
-    stroke: var(--eye-current);
-  }
-  :root[data-theme='pneuma'] .ring-l {
+
+  /* 当前形态：荒=完整、芒=碎裂 */
+  :global(:root[data-theme='ousia']) .nt-whole {
     opacity: 1;
-    filter: drop-shadow(0 0 5px var(--eye-current));
   }
-  :root[data-theme='ousia'] .ring-r {
+  :global(:root[data-theme='pneuma']) .nt-shattered {
     opacity: 1;
-    filter: drop-shadow(0 0 5px var(--eye-current));
+  }
+  /* 未指定主题时的兜底 */
+  :global(:root:not([data-theme])) .nt-whole {
+    opacity: 1;
+  }
+
+  .theme-toggle:hover .nt-icon {
+    transform: scale(1.08) rotate(-6deg);
+  }
+  .theme-toggle:active .nt-icon {
+    transform: scale(0.94);
+  }
+
+  /* 切换瞬间：转一圈 */
+  .nt-icon.spin {
+    animation: toggle-spin 0.8s var(--ease-water);
+    transition: none;
+  }
+  @keyframes toggle-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nt-icon,
+    .nt-icon > span,
+    .nt-icon.spin {
+      animation: none;
+      transition: none;
+    }
+    .theme-toggle:hover .nt-icon {
+      transform: none;
+    }
   }
 </style>
 
 <script>
   const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
   if (btn) {
+    const icon = btn.querySelector<HTMLElement>('[data-nt-icon]');
     btn.addEventListener('click', () => {
-      const next =
-        document.documentElement.dataset.theme === 'ousia' ? 'pneuma' : 'ousia';
+      const next = document.documentElement.dataset.theme === 'ousia' ? 'pneuma' : 'ousia';
       const apply = () => {
         document.documentElement.dataset.theme = next;
         try {
@@ -108,6 +119,13 @@
         document.startViewTransition(apply);
       } else {
         apply();
+      }
+      // 转一圈作为「换形态」的反馈
+      if (icon && !reduced) {
+        icon.classList.remove('spin');
+        void icon.offsetWidth; // 强制重排，让动画可重复触发
+        icon.classList.add('spin');
+        icon.addEventListener('animationend', () => icon.classList.remove('spin'), { once: true });
       }
     });
   }

@@ -22,21 +22,21 @@ export const QUOTES: string[] = [
   '「欢迎回窝，今天也想听你说说话。」',
 ];
 
-/** 猫窝养成阶段（visits 门槛 → 阶段描述） */
+/** 芙芙的小包厢养成阶段（visits 门槛 → 阶段描述） */
 export const CAT_NEST_STAGES = [
-  { min: 1, name: '初来乍到', desc: '一只蜷缩的小猫警惕地看着你' },
-  { min: 3, name: '纸箱安家', desc: '小猫认了这张脸，搬进了纸箱' },
-  { min: 5, name: '软垫伺候', desc: '窝里多了软垫，猫开始翻肚皮' },
-  { min: 10, name: '抱枕毛线', desc: '抱枕和毛线球堆成了小山' },
-  { min: 20, name: '挂灯挂牌', desc: '灯串亮起，名牌写着「枫的猫」' },
-  { min: 40, name: '满级猫窝', desc: '猫窝盛况空前，猫已睡翻' },
+  { min: 1, name: '初来乍到', desc: '芙芙警惕地看着你，尾巴不安地扫着地板' },
+  { min: 3, name: '纸箱安家', desc: '芙芙认了这张脸，搬进了纸箱' },
+  { min: 5, name: '软垫地毯', desc: '地毯铺开、软垫就位，芙芙开始翻肚皮' },
+  { min: 10, name: '抱枕毛线', desc: '抱枕、毛线球和马卡龙堆成了小山' },
+  { min: 20, name: '灯串壁架', desc: '灯串亮起，壁架上摆起水族馆和枫丹小收藏' },
+  { min: 40, name: '满级小包厢', desc: '壁炉生辉、书柜满架，芙芙在天鹅绒猫窝里睡翻' },
 ];
 
 /** 成就徽章定义（icon 用于 toast 表情，glyph 用于页面内的芙宁娜风 SVG 图标） */
 export const ACHIEVEMENTS = [
-  { id: 'first-visit', name: '初来乍到', desc: '第一次推开猫窝的门', icon: '🐾', glyph: 'cat' as const },
-  { id: 'regular', name: '常客', desc: '回访 5 次，猫记住了你', icon: '🐱', glyph: 'star' as const },
-  { id: 'nest-full', name: '猫窝满员', desc: '回访 40 次，满级猫窝', icon: '🏆', glyph: 'shell' as const },
+  { id: 'first-visit', name: '初来乍到', desc: '第一次推开小包厢的门', icon: '🐾', glyph: 'cat' as const },
+  { id: 'regular', name: '常客', desc: '回访 5 次，芙芙记住了你', icon: '🐱', glyph: 'star' as const },
+  { id: 'nest-full', name: '满级小包厢', desc: '回访 40 次，小包厢盛况空前', icon: '🏆', glyph: 'shell' as const },
   { id: 'first-feed', name: '第一罐猫粮', desc: '第一次投喂成功', icon: '🥫', glyph: 'drop' as const },
   { id: 'reader-1', name: '读书猫', desc: '读完第一篇文章', icon: '📖', glyph: 'quill' as const },
   { id: 'reader-10', name: '博学猫', desc: '读完 10 篇文章', icon: '🎓', glyph: 'mask' as const },

@@ -1,6 +1,6 @@
 ---
 /**
- * 猫房间：猫窝养成的主场
+ * 芙芙的小包厢：猫窝养成的主场（芙宁娜猫娘的歌剧包厢）
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CatRoom from '../components/CatRoom.astro';
@@ -11,11 +11,11 @@ import { CAT_NEST_STAGES } from '../consts';
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
-<BaseLayout title="猫房间" description="回访越多，这间猫房间就越齐全——全部数据只存在你自己的浏览器里">
+<BaseLayout title="芙芙的小包厢" description="回访越多，小包厢就越齐全——枫丹式样的小家，数据只存在你自己的浏览器里">
   <section class="container">
     <header class="playbill">
-      <p class="pb-kicker">THE CAT'S ROOM</p>
-      <h1 class="pb-title">猫房间</h1>
+      <p class="pb-kicker">LA LOGE DE FURINA</p>
+      <h1 class="pb-title">芙芙的小包厢</h1>
       <p class="pb-sub">你来得越多，这里就越像个家</p>
       <span class="pb-divider" aria-hidden="true">
         <i></i><Icon name="cat" size={16} /><i></i>
@@ -106,10 +106,13 @@ const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
   }
   .pb-title {
     margin-top: 10px;
-    font-family: var(--font-hand);
+    font-family: var(--font-round);
     font-size: clamp(1.7rem, 5vw, 2.4rem);
-    letter-spacing: 0.24em;
-    text-indent: 0.24em;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+  }
+  .pb-kicker {
+    font-family: var(--font-round);
   }
   .pb-sub {
     margin-top: 8px;
@@ -288,7 +291,7 @@ const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
     '[data-status-next]',
     next
       ? `再回访 ${next.min - visits} 次，房间里会多出「${next.name}」。`
-      : '这间猫房间已经盛况空前了——猫已经睡翻。'
+      : '小包厢已经盛况空前了——芙芙已经睡翻。'
   );
 
   const bar = document.querySelector<HTMLElement>('[data-status-bar]');

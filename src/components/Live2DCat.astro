@@ -31,18 +31,18 @@ const src = (n: string) => `${B}/images/cat/${n}`;
   <div class="stage" data-cat-stage>
     <!-- 尾巴（最底层，从身体后方伸出） -->
     <img class="layer tail" src={src('aylen-tail.webp')} alt="" aria-hidden="true"
-      width="760" height="1053" decoding="async" data-cat-tail />
+      width="760" height="1247" decoding="async" data-cat-tail />
 
     <!-- 身体 -->
     <img class="layer body" src={src('aylen-body.webp')} alt="" aria-hidden="true"
-      width="760" height="1053" decoding="async" data-cat-body />
+      width="760" height="1247" decoding="async" data-cat-body />
 
     <!-- 头（睁眼 / 闭眼交叉淡入） -->
     <div class="head-wrap" data-cat-head>
       <img class="layer head" src={src('aylen-head.webp')} alt="" aria-hidden="true"
-        width="760" height="1053" decoding="async" data-cat-head-open />
+        width="760" height="1247" decoding="async" data-cat-head-open />
       <img class="layer head closed" src={src('aylen-head-closed.webp')} alt="" aria-hidden="true"
-        width="760" height="1053" decoding="async" data-cat-head-closed />
+        width="760" height="1247" decoding="async" data-cat-head-closed />
     </div>
   </div>
 </div>
@@ -50,8 +50,8 @@ const src = (n: string) => `${B}/images/cat/${n}`;
 <style>
   .l2d-cat {
     width: var(--cat-w);
-    /* 立绘原始比例 760 x 1053 */
-    aspect-ratio: 760 / 1053;
+    /* 立绘原始比例 760 x 1247（Q 版水手服） */
+    aspect-ratio: 760 / 1247;
     position: relative;
     user-select: none;
     -webkit-user-drag: none;
@@ -71,9 +71,9 @@ const src = (n: string) => `${B}/images/cat/${n}`;
     pointer-events: none;
   }
 
-  /* 尾巴：绕与身体的交界处旋转 */
+  /* 尾巴：绕与身体的交界处旋转（对应 slice-cat.cjs 的 TAIL_PIVOT） */
   .tail {
-    transform-origin: 74% 76.5%;
+    transform-origin: 70% 75.5%;
     animation: tail-wag 3.6s var(--ease-water) infinite;
     z-index: 1;
   }
@@ -92,7 +92,7 @@ const src = (n: string) => `${B}/images/cat/${n}`;
   .head-wrap {
     position: absolute;
     inset: 0;
-    transform-origin: 50% 47%;
+    transform-origin: 50% 60%;
     transition: transform 0.55s var(--ease-water);
     z-index: 3;
   }

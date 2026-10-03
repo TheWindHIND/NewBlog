@@ -1,6 +1,17 @@
 /* ============================================
    基础样式：reset / 排版 / 通用组件
    ============================================ */
+/* 圆润可爱体：站酷快乐体（OFL 可商用）按需子集，只含「芙的小包厢 LAOGEDFURIN」
+   —— 全站唯一的外部字体，也只是自托管的 1.6KB 文件，零第三方请求。
+   要加字：用 Google Fonts 的 text= 参数重新取子集后替换 public/fonts/zcool-kuaile.woff2 */
+@font-face {
+  font-family: 'ZCOOL KuaiLe';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/NewBlog/fonts/zcool-kuaile.woff2') format('woff2');
+}
+
 *,
 *::before,
 *::after {

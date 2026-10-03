@@ -1,0 +1,94 @@
+---
+/**
+ * 枫丹徽记（Fontaine crest）
+ *
+ * 造型来自参考纹章（藏青底金色对称徽记），已由 scripts/trace-emblem.cjs
+ * 自动描摹 + 贝塞尔拟合为矢量（src/assets/fontaine-crest.svg）：
+ *   菱形顶尖 · 拱形冠 · 展翼横梁 · 中央圣杯 · 两侧双层弧柱
+ *   · 镜像花体字母 · 鎏珠中轴 · 宽底座与垂饰 · 穿过四枚小菱形的细框
+ *
+ * 配色全部走 CSS 变量（--crest-1..4 / --crest-frame / --crest-glow），
+ * 默认值在 tokens.css 里按昼夜主题各定义一套芙宁娜蓝。
+ *
+ * 想换色：在父级或本组件上传 style="--crest-2:#xxx" 即可。
+ */
+import crest from '../assets/fontaine-crest.svg?raw';
+
+interface Props {
+  /** 尺寸，默认 clamp 自适应 */
+  size?: string;
+  /** 入场动画：细框描边 → 实体浮现 */
+  animate?: boolean;
+  class?: string;
+}
+
+const { size = 'clamp(96px, 18vw, 152px)', animate = false, class: cls = '' } = Astro.props;
+---
+
+<span
+  class:list={['crest', cls, { 'is-anim': animate }]}
+  style={`--crest-size:${size}`}
+  role="img"
+  aria-label="枫丹徽记"
+  set:html={crest}
+/>
+
+<style>
+  .crest {
+    display: inline-block;
+    width: var(--crest-size);
+    aspect-ratio: 1;
+    line-height: 0;
+    filter: drop-shadow(0 0 12px var(--crest-glow, rgba(110, 198, 240, 0.38)));
+  }
+  .crest svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---- 入场：细框先勾出轮廓，实体随后浮现 ---- */
+  .is-anim :global(.crest-frame),
+  .is-anim :global(.crest-wings) {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: crest-trace 1.5s var(--ease-water) 0.12s forwards;
+  }
+  .is-anim :global(.crest-body) {
+    opacity: 0;
+    animation: crest-rise 1.1s var(--ease-water) 0.52s forwards;
+    transform-origin: 120px 132px;
+    animation-fill-mode: both;
+  }
+  .is-anim :global(.crest-body),
+  .is-anim :global(.crest-frame),
+  .is-anim :global(.crest-wings) {
+    transform-box: fill-box;
+  }
+
+  @keyframes crest-trace {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes crest-rise {
+    from {
+      opacity: 0;
+      transform: scale(0.965);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-anim :global(.crest-frame),
+    .is-anim :global(.crest-wings),
+    .is-anim :global(.crest-body) {
+      animation: none;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+</style>

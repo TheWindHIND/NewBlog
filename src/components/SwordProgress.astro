@@ -1,0 +1,134 @@
+---
+/**
+ * 阅读进度 · 横置大剑（芙卡洛斯之剑）
+ * ---------------------------------------------------------------
+ * 设计：剑身沿顶线横躺（剑柄在左、剑尖朝右＝行进方向），
+ *      随阅读进度只做水平平移 —— 滚轮时从左滑到右，绝不缩放/拉伸/变形。
+ *      内层 svg 用 rotate(-90deg) 转横（纯旋转，不改几何）。
+ *      顶部另有一条「水位线」，已读段在剑之后点亮（像水位漫过剑影）。
+ * 无 JS 时整条隐藏，不影响正文。
+ * 剑的几何与配色见 src/lib/sword-geom.mjs（颜色走 --sword-* 变量，昼夜两套）。
+ */
+import { swordSVG } from '../lib/sword-geom.mjs';
+
+const sword = swordSVG();
+---
+
+<div class="sword-progress" data-sword-progress aria-hidden="true">
+  <div class="sp-line"><span class="sp-fill" data-sp-fill></span></div>
+  <div class="sp-sword" data-sp-sword><div class="sp-rot"><Fragment set:html={sword} /></div></div>
+</div>
+
+<style>
+  .sword-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 60px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-water);
+  }
+  .sword-progress.visible {
+    opacity: 1;
+  }
+
+  /* 顶部水位线：未读淡、已读亮 */
+  .sp-line {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: var(--sword-line-track);
+  }
+  .sp-fill {
+    display: block;
+    height: 100%;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    background: linear-gradient(90deg, var(--sword-3), var(--sword-2) 68%, var(--sword-1));
+    box-shadow: 0 0 9px 1px var(--sword-glow);
+  }
+
+  /* 剑：外层只做平移（translate3d），不做任何缩放 */
+  .sp-sword {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 176px; /* 横向长度（240:660 ≈ 1:2.75） */
+    height: 64px; /* 纵向高度 */
+    will-change: transform;
+    filter: drop-shadow(0 2px 8px var(--sword-glow));
+  }
+
+  /* 内层：把竖版剑整体旋转 90° 躺平（剑尖朝右）。纯旋转，不变形。 */
+  .sp-rot {
+    position: absolute;
+    inset: 0;
+  }
+  .sp-rot :global(svg) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 64px;  /* 原 viewBox 宽（240） */
+    height: 176px; /* 原 viewBox 高（660） */
+    transform: translate(-50%, -50%) rotate(-90deg);
+    overflow: visible;
+  }
+
+  @media (max-width: 640px) {
+    .sp-sword {
+      width: 138px;
+      height: 50px;
+    }
+    .sp-rot :global(svg) {
+      width: 50px;
+      height: 138px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sword-progress {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const wrap = document.querySelector<HTMLElement>('[data-sword-progress]');
+  const sword = document.querySelector<HTMLElement>('[data-sp-sword]');
+  const fill = document.querySelector<HTMLElement>('[data-sp-fill]');
+  if (wrap && sword && fill) {
+    let ticking = false;
+    const update = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - innerHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+
+      // 开读之后（而不是首页顶部）才露面
+      wrap.classList.toggle('visible', p > 0.015);
+
+      const sw = sword.offsetWidth || 42;
+      const track = wrap.clientWidth || innerWidth;
+      const x = 6 + p * Math.max(0, track - sw - 12);
+
+      // 只做水平平移 —— 剑的形状与尺寸全程不变
+      sword.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
+
+      // 水位线推进到剑的中轴（收尾时正好铺满）
+      const lit = Math.min(1, (x + sw * 0.5) / Math.max(1, track - sw * 0.4));
+      fill.style.transform = `scaleX(${lit.toFixed(4)})`;
+
+      ticking = false;
+    };
+    addEventListener('scroll', () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }, { passive: true });
+    addEventListener('resize', update, { passive: true });
+    update();
+  }
+</script>

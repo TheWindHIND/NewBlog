@@ -13,10 +13,14 @@ const quote = QUOTES[daySeed % QUOTES.length];
 
 <footer class="site-footer">
   <div class="container">
-    <blockquote class="quote">
-      <p>{quote}</p>
+    <blockquote class="quote" data-quote>
+      <p data-quote-text>{quote}</p>
       <cite>—— {SITE.title} · 今日一句</cite>
     </blockquote>
+
+    <!-- 语录原文交给前端：纯静态站构建时算出的「今天」是构建日，
+         访客隔天再来仍是旧句。这里让浏览器按自己的日期再算一次 -->
+    <script type="application/json" id="site-quotes" set:html={JSON.stringify(QUOTES)} />
 
     <FooterCat />
 
@@ -25,7 +29,7 @@ const quote = QUOTES[daySeed % QUOTES.length];
       <span>·</span>
       <a href={`${B}/archive`}>星空归档</a>
       <span>·</span>
-      <a href={`${B}/room`}>猫房间</a>
+      <a href={`${B}/room`}>芙芙的小包厢</a>
       <span>·</span>
       <a href={`${B}/gallery`}>图库</a>
       <span>·</span>
@@ -77,3 +81,21 @@ const quote = QUOTES[daySeed % QUOTES.length];
     color: var(--muted);
   }
 </style>
+
+<script>
+  // 「今日一句」按访客本地日期轮换（公式与构建时一致，只是日期换成访客当天）
+  const holder = document.querySelector<HTMLElement>('[data-quote]');
+  const raw = document.getElementById('site-quotes')?.textContent;
+  if (holder && raw) {
+    try {
+      const quotes: string[] = JSON.parse(raw);
+      const t = new Date();
+      const seed = t.getFullYear() * 372 + (t.getMonth() + 1) * 31 + t.getDate();
+      const today = quotes[seed % quotes.length];
+      const target = holder.querySelector<HTMLElement>('[data-quote-text]');
+      if (target && today && target.textContent !== today) target.textContent = today;
+    } catch {
+      /* 语录缺失时保留构建时那一条即可 */
+    }
+  }
+</script>

@@ -3,9 +3,10 @@
  * 页面水幕转场（MPA 版，不依赖路由）
  *  · 离开：点击站内链接时，一道水幕波浪自下而上漫过整屏
  *  · 抵达：新页面加载时水幕仍覆盖屏幕，随即继续向上退去，露出新页面
- *  · 幕布上写着「幕间」报幕词，配水泡装饰
+ *  · 幕布上写着「幕间」报幕词，上方是枫丹徽记（先勾轮廓、后浮现实体），配水泡装饰
  * 无 JS 时完全不可见，链接正常跳转。
  */
+import FontaineCrest from './FontaineCrest.astro';
 ---
 
 <div class="scene-wipe" data-scene-wipe aria-hidden="true">
@@ -16,10 +17,11 @@
       />
     </svg>
     <div class="wipe-inner">
+      <FontaineCrest class="wipe-crest" size="clamp(104px, 18vw, 166px)" />
+      <span class="wipe-text" data-wipe-text>幕间</span>
       <span class="wipe-bubbles">
         <i></i><i></i><i></i><i></i><i></i>
       </span>
-      <span class="wipe-text" data-wipe-text>幕间</span>
     </div>
   </div>
 </div>
@@ -97,8 +99,49 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 18px;
+    gap: 14px;
   }
+
+  /* ---- 枫丹徽记：先勾细框，实体随后浮现 ---- */
+  .wipe-crest {
+    filter: drop-shadow(0 0 10px var(--crest-glow, rgba(110, 198, 240, 0.4)))
+      drop-shadow(0 0 34px var(--crest-glow, rgba(110, 198, 240, 0.28)));
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+    transition: opacity 0.5s 0.06s, transform 0.85s 0.06s var(--ease-water);
+  }
+  .scene-wipe[data-state='in'] .wipe-crest {
+    opacity: 0.98;
+    transform: none;
+  }
+  .scene-wipe[data-state='in'] :global(.wipe-crest .crest-frame),
+  .scene-wipe[data-state='in'] :global(.wipe-crest .crest-wings) {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: wipe-crest-trace 1.5s var(--ease-water) 0.1s forwards;
+  }
+  .scene-wipe[data-state='in'] :global(.wipe-crest .crest-body) {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: 50% 55%;
+    animation: wipe-crest-rise 1.1s var(--ease-water) 0.5s forwards;
+  }
+  @keyframes wipe-crest-trace {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes wipe-crest-rise {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .wipe-text {
     font-family: var(--font-hand);
     font-size: clamp(1.4rem, 4vw, 2.4rem);

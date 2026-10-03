@@ -280,6 +280,11 @@ const cast = [
   }
   .portrait img {
     width: 100%;
+    /* img 上的 width/height 属性会作为 presentational hint 生效（height: 520px），
+       只写 width:100% 会让窄栏里的头像被纵向拉长 —— 必须显式压回 1:1 */
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
     border-radius: 10px;
     display: block;
   }

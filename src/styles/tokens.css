@@ -14,6 +14,8 @@
   --font-body: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Noto Sans CJK SC", system-ui, sans-serif;
   --font-hand: "KaiTi", "STKaiti", "楷体", var(--font-body);
+  /* 圆润可爱体（仅少量字形的自托管子集，见 base.css 的 @font-face） */
+  --font-round: "ZCOOL KuaiLe", "YouYuan", "幼圆", "Yuanti SC", var(--font-hand);
   --font-mono: "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace;
 
   /* 动效 */
@@ -23,6 +25,40 @@
   /* 歌剧院舞台（全站通用，随主题换色） */
   --stage-edge: 46px;      /* 两侧幕布宽度 */
   --gold-trim: #e8c87a;
+
+  /* 枫丹徽记（ Fontaine crest ）—— 芙宁娜蓝：冰蓝高光 → 水光蓝 → 湛蓝 → 深渊蓝 */
+  --crest-1: #eaf9ff;
+  --crest-2: #5cbdf0;
+  --crest-3: #2f6fd0;
+  --crest-4: #1c3f8e;
+  --crest-frame: rgba(160, 220, 255, 0.42);
+  --crest-glow: rgba(110, 198, 240, 0.38);
+
+  /* 阅读进度 · 垂挂大剑（芙卡洛斯之剑） */
+  --sword-1: #eaf8ff;                       /* 冰蓝高光 */
+  --sword-2: #6cc0f0;                       /* 水光蓝 */
+  --sword-3: #2a76cf;                       /* 湛蓝 */
+  --sword-edge: rgba(28, 76, 145, 0.36);
+  --sword-orn: #f2f9ff;                     /* 护手云纹 */
+  --sword-orn-edge: rgba(104, 158, 206, 0.55);
+  --sword-drop-in: #d3f0ff;
+  --sword-shine: rgba(255, 255, 255, 0.78);
+  --sword-node: #4a4a86;
+  --sword-node-edge: #2c2c58;
+  --sword-node-in: #7070b2;
+  --sword-node-drop: #22224a;
+  --sword-line-track: rgba(91, 192, 232, 0.16);
+  --sword-glow: rgba(91, 192, 232, 0.42);
+
+  /* 荒/芒 图标 · 寒天之钉（默认按昼间冰白） */
+  --nail-body-1: #ffffff;
+  --nail-body-2: #cfe0ef;
+  --nail-edge: rgba(60, 110, 160, 0.45);
+  --nail-line: #4f7fa8;
+  --nail-gem: #46a6e6;
+  --nail-gem-core: #e6f7ff;
+  --nail-horn: #7c93ab;
+  --nail-glow: rgba(90, 170, 230, 0.4);
 }
 
 /* ---------- 夜 · 荒 Ousia ---------- */
@@ -49,9 +85,8 @@
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   --header-bg: rgba(11, 21, 38, 0.75);
 
-  /* 芒 = 金（瞳左）荒 = 蓝（瞳右）→ 荒主题下按钮左蓝右金对调强调当前态 */
-  --eye-current: #5bc0e8;
-  --eye-other: #e8c87a;
+  /* 荒 / 芒 切换按钮：当前形态的图标外发光（夜场偏冷蓝） */
+  --toggle-glow: rgba(91, 192, 232, 0.5);
 
   /* 夜场天鹅绒幕布（深海绸缎） */
   --curtain-a: #0d1a30;
@@ -61,15 +96,55 @@
   --ornament: rgba(232, 200, 122, 0.55);
   --frame-line: rgba(91, 192, 232, 0.16);
 
-  /* 猫房间（夜） */
+  /* 芙芙的小包厢（夜） */
   --room-wall: #16243c;
   --room-wall-2: #1b2c48;
   --room-floor: #0f1b2e;
-  --room-wood: #2b4364;
+  --room-wood: #375681;
   --room-glow: rgba(91, 192, 232, 0.14);
   --room-water: #5bc0e8;
-}
+  /* 窗外枫丹廷（夜）：夜空 / 天际线剪影 / 昼夜物件开关 */
+  --room-sky-a: #0b1c36;
+  --room-sky-b: #2a4d78;
+  --room-far: #16304f;
+  --room-day: 0;
+  --room-night: 1;
+  --room-fire: #ff9e54;
 
+  /* 枫丹徽记（夜场：深海蓝幕布上偏亮的冰蓝） */
+  --crest-1: #eefaff;
+  --crest-2: #66c6f5;
+  --crest-3: #3a86dd;
+  --crest-4: #2465bd;
+  --crest-frame: rgba(160, 220, 255, 0.42);
+  --crest-glow: rgba(110, 198, 240, 0.40);
+
+  /* 阅读进度大剑（夜场：深海幕布上提亮一档） */
+  --sword-1: #eefaff;
+  --sword-2: #66c6f5;
+  --sword-3: #2f7fd8;
+  --sword-edge: rgba(150, 215, 255, 0.38);
+  --sword-orn: #eef8ff;
+  --sword-orn-edge: rgba(160, 205, 240, 0.6);
+  --sword-drop-in: #cdeeff;
+  --sword-shine: rgba(255, 255, 255, 0.8);
+  --sword-node: #55558f;
+  --sword-node-edge: #2b2b56;
+  --sword-node-in: #7a7ab8;
+  --sword-node-drop: #1f1f45;
+  --sword-line-track: rgba(91, 192, 232, 0.14);
+  --sword-glow: rgba(102, 198, 245, 0.45);
+
+  /* 寒天之钉（夜场：冰蓝，深海幕布上提亮） */
+  --nail-body-1: #e8f2fb;
+  --nail-body-2: #9fb6cf;
+  --nail-edge: rgba(160, 215, 255, 0.4);
+  --nail-line: #1b3450;
+  --nail-gem: #5ec8f7;
+  --nail-gem-core: #d8f5ff;
+  --nail-horn: #3d4f6a;
+  --nail-glow: rgba(95, 200, 245, 0.5);
+}
 /* ---------- 昼 · 芒 Pneuma ---------- */
 :root[data-theme="pneuma"] {
   color-scheme: light;
@@ -94,8 +169,7 @@
   --shadow: 0 8px 28px rgba(120, 96, 40, 0.18);
   --header-bg: rgba(247, 243, 232, 0.78);
 
-  --eye-current: #d4a94f;
-  --eye-other: #3fa7d6;
+  --toggle-glow: rgba(212, 169, 79, 0.52);
 
   /* 昼场幕布（香槟金绸缎） */
   --curtain-a: #f3e6c6;
@@ -105,11 +179,52 @@
   --ornament: rgba(180, 138, 52, 0.6);
   --frame-line: rgba(212, 169, 79, 0.22);
 
-  /* 猫房间（昼） */
+  /* 芙芙的小包厢（昼） */
   --room-wall: #fbf5e8;
-  --room-wall-2: #f3e9d6;
+  --room-wall-2: #ecdcc0;
   --room-floor: #e0cfa9;
   --room-wood: #c3a373;
   --room-glow: rgba(212, 169, 79, 0.18);
   --room-water: #4fb8e0;
+  /* 窗外枫丹廷（昼） */
+  --room-sky-a: #9fd3f2;
+  --room-sky-b: #e8f6ff;
+  --room-far: #89a9d2;
+  --room-day: 1;
+  --room-night: 0;
+  --room-fire: #ff8b3d;
+
+  /* 枫丹徽记（昼场：香槟金幕布上压深一档的湛蓝，保证对比） */
+  --crest-1: #f4fcff;
+  --crest-2: #4aa8e0;
+  --crest-3: #2760b8;
+  --crest-4: #1b4a97;
+  --crest-frame: rgba(39, 96, 184, 0.42);
+  --crest-glow: rgba(58, 127, 201, 0.26);
+
+  /* 阅读进度大剑（昼场：香槟金幕布上要压深，否则白剑会糊在底色里） */
+  --sword-1: #cfe7fa;
+  --sword-2: #3f9edc;
+  --sword-3: #1a52a8;
+  --sword-edge: rgba(18, 62, 128, 0.4);
+  --sword-orn: #d8ecfb;                     /* 昼场护手：浅冰蓝 + 深蓝描边，香槟底上才立得住 */
+  --sword-orn-edge: rgba(31, 92, 180, 0.78);
+  --sword-drop-in: #dcf2ff;
+  --sword-shine: rgba(255, 255, 255, 0.88);
+  --sword-node: #4a4a86;
+  --sword-node-edge: #2c2c58;
+  --sword-node-in: #7070b2;
+  --sword-node-drop: #22224a;
+  --sword-line-track: rgba(212, 169, 79, 0.2);
+  --sword-glow: rgba(58, 127, 201, 0.3);
+
+  /* 寒天之钉（昼场：冰白 + 压深的描边，保证在香槟金上有对比） */
+  --nail-body-1: #ffffff;
+  --nail-body-2: #cfe0ef;
+  --nail-edge: rgba(60, 110, 160, 0.45);
+  --nail-line: #4f7fa8;
+  --nail-gem: #46a6e6;
+  --nail-gem-core: #e6f7ff;
+  --nail-horn: #7c93ab;
+  --nail-glow: rgba(90, 170, 230, 0.4);
 }
