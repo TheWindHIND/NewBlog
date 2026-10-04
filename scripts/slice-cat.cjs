@@ -209,13 +209,15 @@ function offsetPoly(pts, marginOf) {
       mask = next;
     }
 
+    // ⚠️ 遮罩值必须写进 **alpha 通道**（RGB 恒白）——
+    //    sharp 合成的 dest-in/dest-out 认的是遮罩的 alpha，不是 RGB。
+    //    v2 曾把 alpha 全写 255、遮罩写进 RGB → 尾巴层吃到整只猫、头/身体层全被挖空。
     const rgba = Buffer.alloc(mw * mh * 4);
     for (let i = 0; i < mask.length; i++) {
-      const v = mask[i] ? 255 : 0;
-      rgba[i * 4] = v;
-      rgba[i * 4 + 1] = v;
-      rgba[i * 4 + 2] = v;
-      rgba[i * 4 + 3] = 255;
+      rgba[i * 4] = 255;
+      rgba[i * 4 + 1] = 255;
+      rgba[i * 4 + 2] = 255;
+      rgba[i * 4 + 3] = mask[i] ? 255 : 0;
     }
     return sharp(rgba, { raw: { width: mw, height: mh, channels: 4 } }).png().toBuffer();
   };
@@ -271,6 +273,50 @@ function offsetPoly(pts, marginOf) {
   if (headClosed) await save(headClosed, 'aylen-head-closed.webp');
   await save(body, 'aylen-body.webp');
   await save(tail, 'aylen-tail.webp');
+
+  /**
+   * ⚠️ 交付前自检（fail-closed）：直接读**刚写出的文件**，断言三层都「有料且不过界」。
+   *
+   * 为什么必须有：合成用的 dest-in/dest-out 认的是遮罩的 **alpha** 通道。
+   * 曾经把遮罩值写进 RGB、alpha 恒 255 → 尾巴层吃到整只猫（62%）、头与身体层全空，
+   * 页面上的「猫」于是整只跟着摆尾动画旋转。这类「图看着像猫、其实分层全错」的故障
+   * 从文件大小上只能看出端倪，必须靠数值断言拦住。
+   */
+  const coverage = async (rel) => {
+    const { data, info } = await sharp(path.join(OUT, rel)).raw().toBuffer({ resolveWithObject: true });
+    let vis = 0;
+    const ch = info.channels;
+    for (let i = 0; i < info.width * info.height; i++) if (data[i * ch + 3] > 128) vis++;
+    return (100 * vis) / (info.width * info.height);
+  };
+  const cover = {
+    head: await coverage('aylen-head.webp'),
+    headClosed: await coverage('aylen-head-closed.webp'),
+    body: await coverage('aylen-body.webp'),
+    tail: await coverage('aylen-tail.webp'),
+  };
+  console.log(
+    'coverage:',
+    Object.entries(cover)
+      .map(([k, v]) => `${k} ${v.toFixed(1)}%`)
+      .join('  ')
+  );
+  const RANGES = {
+    head: [8, 60],
+    headClosed: [8, 60],
+    body: [3, 45],
+    tail: [0.8, 18],
+  };
+  const bad = Object.entries(RANGES).filter(([k, [lo, hi]]) => cover[k] < lo || cover[k] > hi);
+  if (bad.length) {
+    console.error(
+      '\n❌ 分层自检未通过：' +
+        bad.map(([k, [lo, hi]]) => `${k}=${cover[k].toFixed(1)}% 应在 ${lo}~${hi}%`).join('；') +
+        '\n   最常见原因：遮罩的 alpha 通道没写对（合成认 alpha，不认 RGB）。'
+    );
+    process.exit(1);
+  }
+  console.log('✓ 分层自检通过');
 
   // ---------- 调试图 ----------
   const bgLight = { r: 247, g: 243, b: 232, alpha: 1 };

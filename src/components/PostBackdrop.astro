@@ -1,0 +1,70 @@
+---
+/**
+ * 页首渐隐插画带（文章页 / 文章列表页共用）
+ *
+ *  - `.post-bg`：插画本体。用 `mask-image` 做上淡入、下淡出（遮罩只影响 alpha，
+ *    不会像「主题色→透明」渐变那样在 sRGB 插值里混出灰带）；透明度走 tokens：
+ *    文章页 `--post-img-o` / 列表页 `--post-list-img-o`（昼夜各自一套）。
+ *  - `.post-veil`：主题色柔光纱，压住页头标题区，上缘实、往下自然散开，不留矩形硬边。
+ *
+ * 两者都是 `position:absolute; z-index:-1`，所以**必须放在页面内容的最前面**。
+ */
+interface Props {
+  /** background-position，用来把画面主体推到不挡正文的一侧 */
+  position?: string;
+  /**
+   * 版式：`page` = 文章内页（正文直接压在图上，图要更淡）；
+   * `list` = 列表页（正文是卡片，底图可以多露一点）→ 换用 `--post-list-*` 令牌。
+   */
+  variant?: 'page' | 'list';
+}
+const { position = '68% 30%', variant = 'page' } = Astro.props;
+const isList = variant === 'list';
+---
+
+<div
+  class:list={['post-bg', { 'is-list': isList }]}
+  style={`--post-bg-pos:${position}`}
+  aria-hidden="true"
+></div>
+<div class:list={['post-veil', { 'is-list': isList }]} aria-hidden="true"></div>
+
+<style>
+  /* 文章很长，所以不做「固定铺满整屏」（读到下面还透图会伤可读性），
+     改成页首一条**渐隐的插画带**：上缘淡入、下缘淡出，正文落到主题底色上。 */
+  .post-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: min(92vh, 820px);
+    z-index: -1;
+    background-image: var(--post-bg);
+    background-size: cover;
+    background-position: var(--post-bg-pos, 68% 30%);
+    background-repeat: no-repeat;
+    opacity: var(--post-img-o, 0.5);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 58%, transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 58%, transparent 100%);
+  }
+  .post-bg.is-list {
+    opacity: var(--post-list-img-o, var(--post-img-o, 0.5));
+  }
+  .post-veil {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: min(92vh, 820px);
+    z-index: -1;
+    background: var(--bg);
+    opacity: var(--post-veil-o, 0.9);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 15%, transparent 58%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 15%, transparent 58%);
+  }
+  .post-veil.is-list {
+    opacity: var(--post-list-veil-o, var(--post-veil-o, 0.9));
+  }
+</style>

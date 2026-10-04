@@ -1,202 +1,75 @@
 # NewBlog 项目长期备忘
 
-## 仓库与站点
-- GitHub: https://github.com/TheWindHIND/NewBlog（public，main 分支）
-- 站点: https://thewindhind.github.io/NewBlog/
-- 部署：GitHub Actions（.github/workflows/pages.yml），push 到 main 自动发布
-- 用户偏好从零手写设计静态博客，不急着上框架（Hugo/Astro 等）待定
+完整项目说明见资料库《藏枫的猫窝》交接说明书（源文件 `raw-assets/handoff.md`）。本文件只留「坑 + 铁律」。
 
-## 环境坑（务必记住）
-- 本 bash 中 git 需用系统版：`"/c/Program Files/Git/cmd/git.exe" -c http.schannelCheckRevoke=false push`
-  （PATH 默认的 PortableGit 不认该配置，代理环境下 TLS 会失败）
-- ⚠️ **本机 `github.com` 的 HTTPS 时说挂就挂**（2026-10-04 连续 502/000，而 `api.github.com`、`codeload` 正常）。
-  备用通道 = **SSH over 443**（已认证为 TheWindHIND）：
-  ```
-  GIT_SSH_VARIANT=ssh GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-  "/c/Program Files/Git/cmd/git.exe" push ssh://git@ssh.github.com:443/TheWindHIND/NewBlog.git main
-  ```
-  - 必须 `GIT_SSH_VARIANT=ssh`，否则报 `ssh variant 'simple' does not support setting port`；
-    且 ssh 命令得写成 `ssh …`（走 PATH），写绝对路径带空格会被 git 当成无引号的命令而报 `C:/Program: No such file`。
-  - 用这种方式推送**不改 origin**（origin 仍是 HTTPS），日常 push 还是先试默认那条。
-  - 推送后用 `curl -s https://api.github.com/repos/TheWindHIND/NewBlog/actions/runs?per_page=1`
-    看 `conclusion`，再 curl 线上页面抽查关键字（feed 链接 / data-qq / 图片 200）确认真的生效。
-- GitHub API 用 curl 时加 `--ssl-revoke-best-effort`
-- GitHub 令牌存在 Windows 凭据管理器，push 自动认证；如失效需用户重新生成并 `git credential approve`
-- **本地 `astro build` 必先移走 `dist/.prerender`**：Astro 收尾会删这个临时目录，
-  文件数 >100 时被环境的「批量删除防护」拦下、报 `SAFE_DELETE_BULK_CONFIRM_REQUIRED` 而构建失败。
-  分批 `rm` 不保险（会反复触发），**最稳的是 `mv dist/.prerender <项目外的别处>`（改名不算删除）**，
-  再 `npm run build` 即通过。CI 无此 shim，不受影响。
-- **`agent-browser` 在本机已无法启动**（`open` 挂死→SIGTERM；清 `~/.agent-browser/default.*` 无效）。
-  视觉验证兜底：`curl` dev server HTML 抽组件标记 → `sharp` 离屏渲染成 PNG 复核，
-  并断言「构建产物 CSS 选择器是否命中标记」。渲染前记得剥 `data-*`（librsvg 不认）并补 `xmlns`。
-- **真实整页截图（2026-10-03 起可用，替代 agent-browser）**：用系统自带的 Edge 无头模式：
-  `"/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu --no-sandbox \
-   --hide-scrollbars --force-device-scale-factor=2 --force-prefers-reduced-motion \
-   --run-all-compositor-stages-before-draw --window-size=1100,1250 --virtual-time-budget=25000 \
-   --user-data-dir=<临时目录> --screenshot=<绝对路径.png> <url>`
-  - ⚠️ **必须带 `--force-prefers-reduced-motion`**：本站大量元素靠 CSS 过渡入场
-    （`.it` 有 `--d` 逐级延迟最多 0.5s、Live2DCat 有呼吸/眨眼），不加这个标志截到的是**动画中间态**
-    ——表现为「延迟 ≥0.36s 的家具全部不可见」「猫被放大 3 倍」。项目里 `prefers-reduced-motion`
-    分支会把过渡全部关掉 → 一步到位拿到终态。
-  - `--virtual-time-budget` 要 >15s；`--user-data-dir` 每次给新目录避免单例锁冲突。
-- **给 localStorage 依赖的页面「催熟」**：种子页**已留档 `raw-assets/ref/seed.html`** ——
-  构建后 `mkdir -p dist/__seed && cp raw-assets/ref/seed.html dist/__seed/index.html` 再访问
-  `http://localhost:4321/NewBlog/__seed/?t=ousia`（`t` 换 `pneuma` 看昼场，`&v=<次数>` 控制回访数，默认 40；`v=1` 看「刚开门」；
-  **`&to=about|now|posts...` 换落地页**，默认 `room`）。
-  ⚠️ 种子页会 `localStorage.setItem` 写 `catnest.theme` / `catnest.visits` /
-  `catnest.achievements` / `catnest.read` / `catnest.feed.*` 后 `location.replace(...room/)`。
-  ⚠️ `catnest.theme` 是**裸字符串**（`'ousia'`/`'pneuma'`，BaseLayout 内联脚本直接全等比较），
-  而 `catnest.visits` / `catnest.achievements` 等走 `JSON.stringify` —— 别写混。
-  `dist/` 已被 gitignore，塞进去不会进仓库；但会在下次 `astro build` 时消失（要重新 cp）。
+## 站点
+`TheWindHIND/NewBlog` → https://thewindhind.github.io/NewBlog/ ；push main 触发 Actions 发布；全手写设计不上框架。
 
-## 前端踩坑（本项目已复现）
-- Astro 组件的 **scoped 样式打不进 SVG `<use>` 的影子内容**（既不被选择器命中、也不带 scope 属性），
-  路径会退回默认 `fill:black` → 表现为页面顶部「一条黑线」。
-  **需要复用 SVG 几何时渲染成真实节点，别用 `<use>`**；必须用 `<use>` 时把 `fill`/`stroke`
-  写在 `<use>` 元素上靠继承。同类：`set:html` 注入的 SVG 也拿不到 scoped 样式 → 用 `var()` 兜底。
-- ⚠️ **`<img width="520" height="520">` 的宽高属性 = 作者级的 presentational hint**
-  （`width:520px; height:520px`）。CSS 只写 `width:100%` **只覆盖宽度，高度仍是 520px** ——
-  210px 宽的栏里图片被纵向拉长 2.5 倍（关于页头像就是这么「变形」的）。
-  **凡是靠 width/height 属性预留 CLS 的图，作者 CSS 里必须补 `height:auto`**（要固定比例再补 `aspect-ratio`）。
-  修法示例：`about.astro` 的 `.portrait img { width:100%; height:auto; aspect-ratio:1/1; object-fit:cover; }`。
+## 环境铁律
+- git 用系统版：`"/c/Program Files/Git/cmd/git.exe" -c http.schannelCheckRevoke=false push`（PortableGit 不认该配置）。
+- ⚠️ `github.com` HTTPS 时挂（502/000，`api.github.com` 正常）→ 备用 **SSH over 443**：
+  `GIT_SSH_VARIANT=ssh GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" "/c/Program Files/Git/cmd/git.exe" push ssh://git@ssh.github.com:443/TheWindHIND/NewBlog.git main`
+  （必须 `GIT_SSH_VARIANT=ssh`；ssh 要写 `ssh …` 走 PATH。不改 origin。）
+- 推送后查 `api.github.com/repos/TheWindHIND/NewBlog/actions/runs?per_page=1` 的 conclusion（curl 加 `--ssl-revoke-best-effort`），
+  再抽查线上。⚠️ Pages 新文件有传播延迟：刚 success 时新 CSS 可能仍 404/旧内容，等几十秒重试。
+- ⚠️ **`npm run build` 前必须 `mv dist/.prerender <项目外的别处>`**：Astro 收尾删该临时目录，>100 文件会触发环境
+  「批量删除防护」而失败；mv 改名不算删除。CI 无此问题。
+- **截图 = Edge 无头**：`"/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu
+  --no-sandbox --hide-scrollbars --force-device-scale-factor=2 --force-prefers-reduced-motion
+  --run-all-compositor-stages-before-draw --window-size=1100,1250 --virtual-time-budget=25000
+  --user-data-dir=<新目录> --screenshot=<绝对路径> <url>`（agent-browser 本机已废）
+  - **必须 `--force-prefers-reduced-motion`**，否则截到过渡中间态（家具不可见/猫被放大）。
+  - ⚠️ **截图前确认渲染的是新构建**：本地预览服务会内存缓存旧产物（md5 可识破）。
+    改完源码：`npx astro preview stop` → `npx astro preview --port 4321 --force`。
+  - ⚠️ 预览只监听 IPv6：用 `http://[::1]:4321/NewBlog/…`，curl 要加 `--noproxy '*'`（否则被代理挡成 502）。
+- **催熟 localStorage 页面**：构建后 `mkdir -p dist/__seed && cp raw-assets/ref/seed.html dist/__seed/index.html`，
+  访问 `…/__seed/?t=ousia&v=40&to=room`（t=主题，v=回访数，to=落地页 posts/posts/<slug>/about/now…）。
+  ⚠️ `catnest.theme` 存**裸字符串**（`'ousia'`/`'pneuma'`），其余 `visits/achievements/read/feed.*` 走 `JSON.stringify`。
+  `dist/` 已 gitignore，每次 build 后要重新 cp 种子页。
 
-## 「今日一句」机制（Footer）
-- 语录源 `consts.ts` 的 `QUOTES[]`；取句公式 `YYYY*372 + (M+1)*31 + D` 再取模。
-- **双层**：构建时按**构建日**渲染一条（无 JS 兜底）→ Footer 里 `<script type="application/json"
-  id="site-quotes" set:html={JSON.stringify(QUOTES)}/>` 供前端读，同文件 `<script>` 用**访客本地日期**
-  重算 index 覆盖 `[data-quote-text]`。纯静态站只能靠这一手实现「真的每天换」。
-- Astro 会把这种小脚本**内联**进 HTML（不是外链 bundle），全站每页多约 300B，可接受。
+## 前端踩坑
+- Astro **scoped 样式打不进 SVG `<use>` 影子内容**（不命中、无 scope 属性）→ 退回 `fill:black`（顶栏「一条黑线」）。
+  复用 SVG 几何就渲染真实节点；非用 `<use>` 则把 fill/stroke 写在 `<use>` 上。`set:html` 注入的 SVG 同理 → 用 `var(--x,回退)`。
+- ⚠️ **`<img width height>` 是作者级 presentational hint**：只写 `width:100%` 覆盖不了高度 → 窄栏里图片纵向拉长。
+  靠属性预留 CLS 的图，CSS 必须补 **`height:auto`**（要固定比例再加 `aspect-ratio`）。
+- ⚠️ **CSS 变量不跨兄弟节点**：给 `.post-bg`/`.post-veil` 这类兄弟元素配参数时，各自挂自己的变量。
+- 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`，公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
+  + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算 index（纯静态站「真的每天换」的解法）。
 
-## 芙芙的小包厢（`/room`，2026-10-03 三次改版后的现状）
-- 名称：大标题「**芙芙的小包厢**」+ kicker「LA LOGE DE FURINA」（小包厢＝歌剧院包厢）；
-  `consts.ts` 阶段名「满级小包厢」、成就「满级小包厢」、Footer 链接同步。站点名「藏枫的猫窝」不动。
-- **整屋枫丹化**：拱形墙板（`panel()` 生成）、天花板金线脚、金色水滴纹章、**水晶吊灯**（带轻摇动效）。
-- **窗外枫丹风景**（昼夜两套，靠令牌切，不用 JS）：天空渐变 → 昼（太阳/云/飞鸟）·夜（月亮/星/闪光星）
-  → 天际线剪影（歌剧院穹顶、沫芒宫尖塔、排屋）→ 夜加金点城市灯火 + 城市辉光椭圆 + 屋脊白光高光
-  → 水面（`--room-water` 渐变）+ 涟漪 + 音乐喷泉 + 巡轨船 + 水泡；窗台常驻**泡泡桔盆栽**。
-  相关令牌：`--room-sky-a/-b`、`--room-far`、`--room-day`/`--room-night`（0/1，给 SVG `opacity` 属性用）、`--room-fire`。
-  ⚠️ 夜里剪影若只靠 `--room-far` 压深天，会**整片看不见** → 必须给辉光 + 高光。
-- **枫丹特产**（用户点名要的）：泡泡桔（盆栽/果篮）、虹彩蔷薇、苍晶螺、幽光星星（玻璃罐，自带发光）、
-  美露莘摆件、发条齿轮、《蒸汽鸟报》。特产分布在窗台/壁架/炉台/柜顶，随解锁幕次出现。
-- 解锁件（`data-need`）：猫粮碗(0)、纸箱(3)、地毯+软垫(5)、抱枕毛线+马卡龙碟(10)、
-  灯串+窗下壁架（水族箱+特产）(20)、壁炉+书柜+相框×3+绿植+猫爬架+**天鹅绒猫窝+喷泉水盆**(40)。
-- 布景全在 `src/components/CatRoom.astro` 一张 SVG（viewBox 800×460，`preserveAspectRatio="slice"`）。
-- ⚠️ **必须避开"猫位"中带**：主角 Live2DCat 是 HTML 浮层、占 stage 中央 26% 宽
-  ≈ viewBox **x296–504**（纵向 y≈96–437）。墙面可用区只剩**左侧 x<290** 与 **右侧 x>504**
-  （再扣窗 x488–668、爬架 x696–800）。壁架第一版挂在 x284–458 被头发整个挡住，白做。
-- 配色令牌 `--room-*`（`tokens.css` 昼夜各一套）。**夜场 `--room-wood` 曾 #2b4364 压墙 #16243c 对比过低**
-  → 已改 **#375681** + 木器统一补 `--ornament` 勾边；**昼场 `--room-wall-2` 曾 #f3e9d6**（墙裙看不见）
-  → 改 **#ecdcc0**。木器/护墙板改色前务必两套主题都出图核对。
-- **墙上挂画（芙宁娜海报，`data-need=20`）**：源图 1181×1181 → `public/images/room/furina-poster.webp`（340px/37KB）。
-  结构＝挂钩 → 吊线 → 木框 80×80（`--room-wood`）→ 奶油卡纸 `#f4ecdc` → 画心 66×66（`xMidYMid slice`）
-  → 玻璃反光三角 → 水滴纹名牌（`<path>` 画，别用 `<text>`）。位置 x702–782 / y152–232（右墙、相框下方）。
-  ⚠️ 挂钩必须落在中间相框（x712–756 / y106–140）**下沿之外**：原来放 (742,133) 落在相框里，
-  读起来像「海报挂在相框上」；改 (742,144) 才对。
-- ⚠️ **家具用色别直接吃 `--accent/--accent-2`**：昼场 `accent-2` 是金、夜场是别的 ——
-  绿植照 `--accent` 画，昼场就成了橄榄金"塑料叶"。植物类一律写**真绿**常量（#7fae72/#9cc48a/#6f9e64…）。
-- ⚠️ 两个"我自己造又自己踩"的形：①炉膛开口做太大（x42–126/y208–322）＝墙上一块黑洞，
-  必须小拱（x58–110，拱顶 y286）+ 大而亮的火焰 + 暖光；②猫窝内圈用暗色 → 读成"地上的一滩水"，
-  要**浅色内垫 + 金辫 + 波浪嵌线**才像床。
+## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`）
+- 双下巴修法：头切线挪到 61.8~63% 平坦颈肉（两侧进发丝）、羽化 1.4px、`transform-origin: 50% 62%` 压在切缝，
+  竖直响应用 **`scaleY` 点头**（`translate(cx*1.3%, cy*0.12%) rotate(cx*2.4deg) scaleY(1-cy*0.05)`）。
+- 尾巴修法：①`_probe-tail.cjs` 逐行量边界重写 `TAIL_POLY`（内缘绕开手指：y79~82% 手占 x68.2~76.2；外缘到 x≈91%）；
+  ②`TAIL_MARGIN=1.0` **绝不往根部扩**；③`growMaskIntoInk(mask,6)` 沿深色线稿生长吃描边（贴皮肤的深色不吃，保住手描边）；
+  ④`TAIL_PIVOT=(70.5,85.5)` 可见根部，CSS 同步；尾巴画在身体之上（z-index 2）。
+- ⚠️⚠️ **sharp 合成的 `dest-in`/`dest-out` 认遮罩 alpha，不认 RGB**。曾把遮罩写进 RGB、alpha 恒 255 →
+  尾巴层吃到整只猫、头身层全空 → 页面「猫」整只跟着摆尾动画转（用户看到的是「先快晃几下再机械旋转」）。
+  正解：**RGB 恒白、遮罩值写进 alpha**。`slice-cat.cjs` 已加交付前自检（读刚写的 webp 断言四层覆盖率，越界 exit 1）。
+- ⚠️ **改了切图脚本必须重跑 + 重新截图核对**（本轮事故＝验证过→又改脚本→没重验→坏图进仓库）。
+- 夹具 `_motion-fixture.cjs`：复制 `dist/room/index.html` → `dist/__motion/` 并注入脚本，按生产公式钉姿态
+  `?cx=&cy=&tail=`，**`?bg=magenta`** 藏布景刷品红（缺像素立刻漏底）。配 `_chk-tail-layers.cjs`、`_chk-alpha.cjs`（覆盖率速查）。
+  ⚠️ 偶发整层空白 = `decoding="async"` 解码竞态，重跑即正常。
 
-## 字体（唯一自托管字体）
-- **圆润标题体 = 站酷快乐体（ZCOOL KuaiLe，OFL 可商用）子集**：`public/fonts/zcool-kuaile.woff2`（约 1.6KB，
-  仅含「芙的小包厢 LAOGEDFURIN」）＋同目录 `OFL-ZCOOLKuaiLe.txt`；`base.css` 顶部 `@font-face`，
-  令牌 `--font-round`，room 页的 `.pb-title`/`.pb-kicker` 用它。
-- **要加字**：`curl -A "<浏览器UA>" "https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&text=<URL编码的字>"`，
-  取返回 CSS 里的 woff2 地址下载覆盖即可（不是全量字体，别拿去当正文字体）。
-- ⚠️ 系统里**没有幼圆**（`YouYuan`/`幼圆`），所以单纯堆系统字体栈会掉回 KaiTi 楷体 —— 必须自托管子集。
-- ⚠️ 本机 curl 访问 raw.githubusercontent / Google Fonts 要加 `--ssl-revoke-best-effort`（否则 exit 35 静默空文件）。
+## 背景插画（一张夜图两处用）
+- 关于页：`public/images/about/room-night.webp`；`.page-bg` 固定铺满 + `::after` 压主题色；
+  令牌 `--about-*-o`（夜 0.55/0.62/0.42，昼 0.4/0.87/0.16）。「枫」字 = `data-qq="2927015997"` 点击复制。
+- 文章页 + 列表页：共用 `src/components/PostBackdrop.astro`（`variant="list"` 换列表页令牌），
+  源图 → `public/images/post/swing-night.webp`（原图留档 `raw-assets/post/swing-src.jpg`）。
+  页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、`background-position:68% 30%`、`mask-image` 上淡入下淡出）
+  + `.post-veil`（纯 `var(--bg)` + mask 只压上缘）。
+  ⚠️ **别用「主题色→透明」渐变当纱**（sRGB 插值中段混灰）→ 一律 mask。
+  令牌：`--post-bg`、`--post-img-o`（夜 .5/昼 .34）、`--post-veil-o`（夜 .86/昼 .94）、
+  列表页 `--post-list-img-o`/`--post-list-veil-o`（夜 .66/.66，昼 .38/.9）。
 
-## 视觉资产
-- 猫立绘管线：`raw-assets/cat/aylen-full.png`（原画，**眼睛以此为准**）→ `hat-ears-only.cjs`（合成猫耳贝雷帽）
-  → `slice-cat.cjs`（切 head/head-closed/body/tail）→ `public/images/cat/*.webp`。
-  ⚠️ `scripts/eyes-cat.cjs`（矢量水滴瞳）**已废弃**，误跑会覆盖眼睛。
-- 徽记：`scripts/trace-emblem.cjs` → `src/assets/fontaine-crest.svg`（描摹+贝塞尔拟合，CSS 变量换色）
-- 图标：`scripts/key-ui.cjs`（绿幕抠图）→ `public/images/ui/*.webp`
-- **矢量道具（手绘几何，不走抠图）**：
-  - `src/lib/sword-geom.mjs` → `swordSVG()` 芙卡洛斯之剑（阅读进度条横置剑，`SwordProgress.astro`）。
-    **v3 版式（2026-10-03 末次返工，viewBox 仍 240×660）**：自上而下＝水滴剑首 → 领圈 →
-    缠绳握柄 → 柄环 → 细颈 → 卷草护手＋深蓝菱节点 → 双长刃（**平行窄刃身，总宽 78**，两刃在 y606
-    合拢成点）→ **剑尖端：白色后掠浪翼 `FLARE` + 每侧后掠浪臂/内旋卷浪 + 中央垂坠水滴**。
-    绘制顺序：飞翼在前、**双长刃在后** —— 于是合拢的蓝刃尖压在白色飞翼上可见（＝原图的样子）。
-    ⚠️ 三条血泪教训：①刃身若做「渐变收尖」横过来会像叶子，必须平行刃身+尖端收锋；
-    ②**浅色主题下 `--sword-orn` 不能用接近底色的象牙色**（护手会整片消失，剑看着就"没有护手/像匕首"）；
-    ③**剑尖那块在原图里是「白」的、且跨度约为刃身总宽的 2.5–2.9 倍** —— 做成和刃同色的小新月一定不像。
-  - `src/lib/nail-geom.mjs` → `nailSVG('whole'|'shattered')` 寒天之钉（荒/芒切换图标，`ThemeToggle.astro`）
-  - 两者颜色都写成 `var(--sword-* / --nail-*, 回退色)` 的**属性**（要过 `set:html`，吃不到 scoped 样式）；
-    令牌在 `tokens.css` 昼夜各一套。卷曲纹样用「螺旋点列 + 变宽带拟合」生成，别用等宽描边。
-    ⚠️ `ribbon(pts, widths)` 的 widths 必须与 pts **等长**，少一个会算出 NaN 让整段路径失效
-    （已加兜底：宽度数组短了就沿用最后一档）。
-
-## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`，2026-10-04 修完）
-症状：鼠标上下移动时下巴出现**双层重影**；尾巴摆动时**割裂**。
-- **双下巴根因**：头层切割线原来压在下巴深色轮廓（x=50% 处 59.7–60.8%）上，
-  ±0.7% 羽化带随头位移 → 半透明下巴复印一份。
-  **修法**：切割线挪到 61.8–63% 的**平坦颈肉**上（两侧放进发丝内部），羽化 3 → **1.4px**，
-  且 **`transform-origin` 压在切割线上（`.head-wrap { 50% 62% }`）** —— 于是竖直响应改用
-  **`scaleY`（点头）而不是 `translateY`**：绕枢轴缩放时枢轴线是不动线，切缝竖直位移 ≈ 0。
-  JS 公式：`translate(cx*1.3%, cy*0.12%) rotate(cx*2.4deg) scaleY(1 - cy*0.05)`。
-  旋转带来的侧向扫动 ∝ 距枢轴水平距离，经逐列核对 x42–70%（颈/领口）位移 ≤6px 可接受，
-  两侧大多落在透明背景/发丝内部。
-- **尾巴割裂的真凶（2026-10-04 才算彻底查清）**：手绘多边形切进了**手指/袖口/裙摆**像素 ——
-  那些像素被算进尾巴层，尾巴一转就跟着飞走；同时身体层对应位置被挖空 → 两道裂。
-  修法三件套：
-  1. **轮廓逐行量出来**：`scripts/_probe-tail.cjs` 按行打印「透明/线稿/白毛/皮肤/蓝」分段，
-     用真实边界重写 `TAIL_POLY`（内缘必须绕开手指：y79~82% 处手占 x68.2~76.2；外缘要贴到 x≈91%）。
-     核对工具 `scripts/_chk-tailpoly.cjs`（把多边形描边画在原画上）。
-  2. **遮罩不许往根部扩余量**：`TAIL_MARGIN = 1.0` 常量，只补抗锯齿；再 `growMaskIntoInk()`
-     **沿深色线稿生长 6 轮**把尾巴自己的描边整条吃进遮罩 —— 否则身体层残留静止的黑色轮廓碎片
-     （折线压不住曲线描边）。生长时挨着皮肤的深色像素不吃（保住手的描边）。
-  3. **枢轴移到尾巴可见根部** `TAIL_PIVOT = (70.5, 85.5)`（旧值 66,84.5 埋在裙子里，基部会摆 3–5px）。
-     尾巴仍画在身体**之上**（画在下面会被身体边缘切掉）。
-  摆幅：`tail-wag` -3°/4.5°、`tail-wag-fast` -6°/9°。
-- **验证夹具**：`scripts/_motion-fixture.cjs` —— 把 `dist/room/index.html` 复制到 `dist/__motion/` 并注入脚本，
-  用**和生产一致的公式**把猫钉在任意姿态：`?cx=0.9&cy=1&tail=9`（cx 左右 ±1、cy 上下 ±1、tail 角度）；
-  **`?bg=magenta`** 会藏起房间布景、页面刷成品红 —— 图层缺像素就漏品红，排障神器。
-  另配 `scripts/_chk-tail-layers.cjs`：tail/body/head 三层分别衬品红并排放大，直接看每层装了什么。
-  ⚠️ 偶发整层空白 = `decoding="async"` 解码竞态，**重跑即正常，别当 bug 改代码**。
-
-## RSS 与 `/feed` 页
-- **浏览器直接打开 `/rss.xml` 显示一棵 XML 树是正常现象**——RSS 是给阅读器读的格式，不是给人读的页面。
-- **XSLT 方案已废弃**：给 rss.xml 挂 `<?xml-stylesheet ... rss-style.xml?>` 后，Chromium 会顶
-  大红警告条「This site uses XSLT; that functionality is being removed from this browser very soon」
-  → 不可用。`rss.xml.js` 保持原样、不要再用 XSLT。
-- 人类入口改为 **`src/pages/feed.astro`**：playbill 页头 + 订阅地址卡（`code[data-feed-url]` + 复制按钮，
-  clipboard + `document.execCommand` 兜底）+ 说明 + 最新文章清单。Footer 链接 `${B}/feed`。
-- head 里的 `<link rel="alternate" type="application/rss+xml" href=".../rss.xml">` **保留**（阅读器自动发现）。
-
-## 关于页背景插画（`about.astro`）
-- 源图 1376×768 → `public/images/about/room-night.webp`（1380px/49KB）；`.page-bg` 固定铺满 + `::after` 压主题色。
-- **必须按主题分档**（一张暗夜景图直接压昼场香槟底，整页会发灰）：
-  `tokens.css` 里 `--about-img-o` / `--about-veil-o` / `--about-photo-o`
-  ＝ **夜 0.55 / 0.62 / 0.42，昼 0.4 / 0.87 / 0.16**；`about.astro` 用 `var(--about-*-o, 回退)`。
-- 「枫」字是 `<button class="qq-name" data-qq="2927015997">`，点击复制 QQ（clipboard + 兜底，2s 还原）。
-
-## 文章页背景插画（`PostLayout.astro`）
-- 源图 1439×794 → `public/images/post/swing-night.webp`（1439px/53KB，原图留档 `raw-assets/post/swing-src.jpg`）。
-- **不做「固定铺满整屏」**（长文读到下面还透图会伤可读性），而是页首一条**渐隐插画带**：
-  `.post-bg` 绝对定位、`height: min(92vh,820px)`、`background-position: 68% 30%`（把人物推到正文栏右侧），
-  **用 `mask-image` 做上淡入/下淡出**；再叠一层 `.post-veil`（纯 `var(--bg)` + `mask-image` 上缘压住标题区）。
-  ⚠️ 别用「主题色→透明」的渐变当纱：sRGB 插值会在中段混出一层灰；要用 mask（只影响 alpha）。
-- 令牌：`--post-bg` / `--post-img-o`（夜 0.5、昼 0.34）/ `--post-veil-o`（夜 0.86、昼 0.94）。
-
-## 资料库交接文档
-- 《藏枫的猫窝》项目交接说明书已建在资料库个人空间：
-  `https://www.workbuddy.cn/space/d/tniMGaTcBsTXgGYZZik12o`
-  内容＝快速上手 / 技术栈 / 目录结构 / 设计系统 / 页面清单 / 核心机制 / 资产管线 / 验证工作流 / 铁律与坑 / 协作约定 / 待办。
-  源文件留档 `raw-assets/handoff.md`（改完可用 `doc/create_doc.py --node-block-id <id> --confirm-overwrite` 覆盖）。
-
-## 参考图 → 矢量 的工序（本项目已验证）
-1. `scripts/probe-refs.cjs <图> [列数]`：降采样成**字符轮廓**，直接读比例，不用出图。
-2. `scripts/crop-ref.cjs <图> <出> x0 y0 x1 y1 [倍率]`：归一化坐标裁局部放大看结构。
-3. `scripts/grid-ref.cjs <入> <出> [格数]`：**叠网格标尺**，把局部结构的坐标读成归一化数值（很好用）。
-4. `scripts/mask-ref.cjs <入> <出> [white|bright] [阈值]`：**白度/亮度掩膜**，把「白色构件」从
-   彩色刀身与背景里分离出来，看轮廓不被光晕干扰。⚠️ stride 必须**按缓冲区长度反推通道数**，
-   不能信 `metadata().channels`（`removeAlpha()` 后仍可能报 4 → 画面错位重影）。
-5. 手写 SVG 几何（生成式，写进 `src/lib/*-geom.mjs`）+ 描摹器 `scripts/trace-emblem.cjs`。
-6. `scripts/render-sword.cjs` / `render-nail.cjs` / `render-tip.cjs`：多尺寸 × 昼夜两套离屏渲染
-   + 与参考并排对照。⚠️ `sharp().resize({width,height})` **同时给宽高默认 fit:cover 会裁切**，
-   SVG 已按目标尺寸渲染时不要再 resize。
-7. `scripts/preview-built.cjs`：**从 `dist` 真 HTML 抽 svg** → 用 `tokens.css` 解析出的主题变量
-   替换 `var(--x, 回退)` → `sharp` 渲染成头部/图标预览；顺带断言「无 var() 残留」。
-   （小尺寸显示要按屏幕像素反推描边宽度：50px 宽的 240 单位画布，1.6 单位只有 0.33px，太细。）
+## 包厢 / 字体 / 资产（细节见 handoff.md，只记易踩的）
+- ⚠️ 包厢墙面**避开猫位中带**（Live2DCat 浮层占 viewBox x296–504，纵向 y≈96–437）→ 只用 x<290 与 x>504。
+- ⚠️ 家具**别吃 `--accent/--accent-2`**（昼夜含义不同）：植物写**真绿常量**；夜场木器用 #375681 + `--ornament` 勾边；
+  昼场墙裙 #ecdcc0。改色前**两套主题都出图**。
+- 字体：站酷快乐体子集 `public/fonts/zcool-kuaile.woff2`（仅标题几个字），令牌 `--font-round`；系统**没有幼圆**，
+  堆系统栈会掉回 KaiTi。加字用 Google Fonts `text=` 接口取 woff2（curl 加 `--ssl-revoke-best-effort`）。
+- 资产管线：`raw-assets/cat/aylen-full.png`（原画）→ `hat-ears-only.cjs` → `slice-cat.cjs` → `public/images/cat/*.webp`；
+  `scripts/eyes-cat.cjs` **已废弃**，误跑会覆盖眼睛。图标 `key-ui.cjs`（绿幕抠）、徽记 `trace-emblem.cjs`。
+- 矢量道具：`sword-geom.mjs`（阅读进度剑）、`nail-geom.mjs`（寒天之钉）→ 颜色写成 `var(--x,回退)` 的**属性**（要过 `set:html`）。
+  ⚠️ 参考图→矢量工序：`probe-refs` 字符轮廓 → `crop-ref`/`grid-ref` 放大读坐标 → `mask-ref` 掩膜分离白色构件
+  （stride 按缓冲区长度反推通道数，别信 `metadata().channels`）→ 手写生成式 SVG → `render-*.cjs` 昼夜多尺寸对照
+  （SVG 已按目标尺寸渲染就**别再 resize**）。
