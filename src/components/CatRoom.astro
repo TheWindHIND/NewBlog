@@ -12,6 +12,10 @@
  */
 import Live2DCat from './Live2DCat.astro';
 
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+/** 墙上的挂画（芙宁娜的海报） */
+const POSTER = `${B}/images/room/furina-poster.webp`;
+
 // 沿灯串曲线生成灯泡位置
 const bulbs: { x: number; y: number }[] = [];
 for (let i = 0; i <= 16; i++) {
@@ -526,6 +530,24 @@ const FRAMES = [
             </g>
           </g>
         ))}
+      </g>
+
+      <!-- 墙上挂画（第 5 幕解锁；芙宁娜的海报，挂在右墙相框下方） -->
+      <g class="it" data-need="20">
+        <!-- 挂钩与吊线（挂钩要落在中间相框下沿 y=140 之下，否则像挂在相框上） -->
+        <path d="M742 143 V147" stroke="var(--gold-trim)" stroke-width="1.4" opacity="0.75" />
+        <path d="M742 147 L716 156 M742 147 L768 156" stroke="var(--ornament)" stroke-width="1" opacity="0.7" />
+        <circle cx="742" cy="144" r="2.2" fill="var(--gold-trim)" />
+        <!-- 画框 -->
+        <rect x="702" y="152" width="80" height="80" rx="4" fill="var(--room-wood)" stroke="var(--ornament)" stroke-width="1.4" />
+        <rect x="706" y="156" width="72" height="72" rx="2" fill="#f4ecdc" stroke="var(--gold-trim)" stroke-width="1" opacity="0.95" />
+        <!-- 画心 -->
+        <image href={POSTER} x="709" y="159" width="66" height="66" preserveAspectRatio="xMidYMid slice" />
+        <!-- 玻璃反光 -->
+        <path d="M709 159 L734 159 L709 208 Z" fill="#fff" opacity="0.08" />
+        <!-- 名牌（水滴纹） -->
+        <rect x="726" y="236" width="32" height="9" rx="2" fill="var(--gold-trim)" opacity="0.85" />
+        <path d="M742 238 C744 240.6 744.6 241.8 744.6 242.7 A2.6 2.6 0 1 1 739.4 242.7 C739.4 241.8 740 240.6 742 238 Z" fill="var(--room-wall)" opacity="0.8" />
       </g>
 
       <!-- 纸箱（第 2 幕解锁） -->

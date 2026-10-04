@@ -10,6 +10,10 @@ import Live2DCat from '../components/Live2DCat.astro';
 import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES } from '../consts';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+/** 页头横幅 / 整页氛围背景 */
+const BG = `${B}/images/about/room-night.webp`;
+/** 点「枫」复制的联系方式 */
+const QQ = '2927015997';
 
 const machinery = [
   { icon: 'bubble' as const, name: '荒 · 芒 双形态', desc: '昼是黄金舞台，夜是深海王座。点右上角的异色瞳就能换一幕。' },
@@ -27,8 +31,12 @@ const cast = [
 ---
 
 <BaseLayout title="关于" description={`关于${SITE.title}与${SITE.author}——一册演出介绍`}>
+  <!-- 整页氛围背景：夜色里的芙宁娜（固定铺满，再压一层主题色保证文字可读） -->
+  <div class="page-bg" aria-hidden="true" style={`--about-bg:url(${BG})`}></div>
+
   <section class="container">
-    <header class="playbill">
+    <header class="playbill" style={`--about-bg:url(${BG})`}>
+      <span class="pb-photo" aria-hidden="true"></span>
       <p class="pb-kicker">THE PROGRAMME</p>
       <h1 class="pb-title">演出介绍册</h1>
       <p class="pb-sub">{SITE.title} · {SITE.subtitle}</p>
@@ -42,7 +50,13 @@ const cast = [
       <h2 class="sec-title"><span class="ord">序曲</span>OVERTURE</h2>
       <div class="prose">
         <p>
-          你好，我是<strong>{SITE.author}</strong>。「藏枫」——把枫藏起来的地方，就是猫窝。
+          你好，我是<button
+            type="button"
+            class="qq-name"
+            data-qq={QQ}
+            title={`点一下复制 QQ：${QQ}`}
+            aria-label={`复制 QQ 号 ${QQ}`}
+          ><strong>枫</strong><span class="qq-chip" data-qq-chip>QQ 复制</span></button>。「藏枫」——把枫藏起来的地方，就是猫窝。
         </p>
         <p>
           这里是我的个人博客：写折腾记录、写思考、也写没什么用的日常。
@@ -165,6 +179,28 @@ const cast = [
     max-width: 880px;
   }
 
+  /* ---------- 背景插画 ---------- */
+  /* 整页氛围（固定在视口，再压一层主题色，保证正文可读） */
+  .page-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--about-bg);
+    background-size: cover;
+    background-position: 50% 28%;
+    background-repeat: no-repeat;
+    /* 昼夜分档：昼场要压得更淡，否则整页发灰（见 tokens.css） */
+    opacity: var(--about-img-o, 0.55);
+    pointer-events: none;
+  }
+  .page-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    opacity: var(--about-veil-o, 0.62);
+  }
+
   /* ---------- 节目册页头 ---------- */
   .playbill {
     text-align: center;
@@ -172,9 +208,22 @@ const cast = [
     position: relative;
     border: 1px solid var(--frame-line);
     border-radius: var(--radius-lg);
-    background:
-      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
-      var(--bg-card);
+    background: var(--bg-card);
+  }
+  /* 页头里的插画：中间压一层卡片色，正好托住标题 */
+  .pb-photo {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    background-image:
+      radial-gradient(ellipse 66% 128% at 50% 46%, var(--bg-card) 6%, transparent 76%),
+      var(--about-bg);
+    background-size: auto, cover;
+    background-position: center, 50% 26%;
+    background-repeat: no-repeat;
+    opacity: var(--about-photo-o, 0.42);
+    pointer-events: none;
   }
   .playbill::before,
   .playbill::after {
@@ -185,10 +234,15 @@ const cast = [
     border-radius: calc(var(--radius-lg) - 7px);
     opacity: 0.32;
     pointer-events: none;
+    z-index: 2;
   }
   .playbill::after {
     inset: 11px;
     opacity: 0.16;
+  }
+  .playbill > *:not(.pb-photo) {
+    position: relative;
+    z-index: 1;
   }
   .pb-kicker {
     font-size: 0.7rem;
@@ -265,6 +319,54 @@ const cast = [
   }
   .prose strong {
     color: var(--accent);
+  }
+  /* 「枫」= 点击复制 QQ */
+  .qq-name {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    vertical-align: baseline;
+  }
+  .qq-name strong {
+    color: var(--accent);
+    text-decoration: underline dotted var(--accent-2);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 5px;
+    transition: text-decoration-color 0.25s, color 0.25s;
+  }
+  .qq-name:hover strong,
+  .qq-name:focus-visible strong {
+    text-decoration-style: solid;
+    color: var(--accent-2);
+  }
+  .qq-name:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .qq-chip {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    padding: 1.5px 8px;
+    border-radius: 999px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    transform: translateY(-3px);
+    transition: color 0.25s, background 0.25s, border-color 0.25s;
+  }
+  .qq-name.done .qq-chip {
+    color: var(--bg);
+    background: var(--accent-2);
+    border-color: var(--accent-2);
   }
 
   /* ---------- 登场人物 ---------- */
@@ -537,6 +639,49 @@ const cast = [
 
 <script>
   import { catnest } from '../scripts/catnest';
+
+  // 「枫」：点一下复制 QQ 号
+  const qqBtn = document.querySelector<HTMLButtonElement>('[data-qq]');
+  if (qqBtn) {
+    const chip = qqBtn.querySelector<HTMLElement>('[data-qq-chip]');
+    const label = chip?.textContent ?? 'QQ 复制';
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const fallbackCopy = (text: string): boolean => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:-999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch {
+        return false;
+      }
+    };
+
+    qqBtn.addEventListener('click', async () => {
+      const num = qqBtn.dataset.qq ?? '';
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(num);
+        ok = true;
+      } catch {
+        ok = fallbackCopy(num); // 非安全上下文 / 旧浏览器
+      }
+      if (!chip) return;
+      chip.textContent = ok ? `已复制 ${num}` : num;
+      qqBtn.classList.toggle('done', ok);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        chip.textContent = label;
+        qqBtn.classList.remove('done');
+      }, 2000);
+    });
+  }
 
   // 徽章解锁状态
   const got = new Set(catnest.achievements());

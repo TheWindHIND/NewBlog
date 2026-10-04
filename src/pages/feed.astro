@@ -1,0 +1,317 @@
+---
+/**
+ * 订阅页 · RSS 的人类入口
+ * 浏览器直接点开 rss.xml 只会看到源码（那是对的，RSS 是给阅读器读的），
+ * 所以这里做一页可读的说明 + 最新文章清单 + 一键复制订阅地址。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Ornament from '../components/Ornament.astro';
+import { SITE } from '../consts';
+import { getCollection } from 'astro:content';
+
+const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const feedUrl = 'https://thewindhind.github.io/NewBlog/rss.xml';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const dateFmt = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<BaseLayout title="订阅" description={`用 RSS 订阅${SITE.title}——把新文章送进你的阅读器`}>
+  <section class="container">
+    <header class="playbill">
+      <p class="pb-kicker">SUBSCRIBE</p>
+      <h1 class="pb-title">订阅这窝猫</h1>
+      <p class="pb-sub">{SITE.title} · RSS 2.0</p>
+      <span class="pb-divider" aria-hidden="true">
+        <i></i><Icon name="wave" size={15} /><i></i>
+      </span>
+    </header>
+
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">地址</span>FEED URL</h2>
+      <div class="feed-box">
+        <code data-feed-url>{feedUrl}</code>
+        <button type="button" class="copy-btn" data-copy={feedUrl}>
+          <span data-copy-label>复制地址</span>
+        </button>
+      </div>
+      <p class="hint">
+        把上面这串地址粘进任意 RSS 阅读器（Feedly、Inoreader、NetNewsWire、FreshRSS…）即可订阅。
+        <br />
+        直接点开 <a href={`${B}/rss.xml`}>rss.xml</a> 看到一堆 XML 源码是<strong>正常现象</strong>——
+        那是给程序读的格式，不是给人读的页面，所以这里另做了一页。
+      </p>
+    </section>
+
+    <Ornament motif="note" label="最新" />
+
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">最新收录</span>LATEST</h2>
+      <ul class="feed-list">
+        {
+          posts.map((p) => (
+            <li>
+              <a class="title" href={`${B}/posts/${p.id}/`}>{p.data.title}</a>
+              <span class="date">{dateFmt.format(p.data.date)}</span>
+              {p.data.description && <p class="desc">{p.data.description}</p>}
+              {p.data.tags.length > 0 && (
+                <p class="tags">
+                  {p.data.tags.map((t) => (
+                    <span>{t}</span>
+                  ))}
+                </p>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </section>
+</BaseLayout>
+
+<style>
+  .container {
+    padding-block: 40px 20px;
+    max-width: 880px;
+  }
+
+  /* ---------- 页头 ---------- */
+  .playbill {
+    text-align: center;
+    padding: 30px 22px 26px;
+    position: relative;
+    border: 1px solid var(--frame-line);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(ellipse 70% 130% at 50% 0%, var(--accent-soft), transparent 72%),
+      var(--bg-card);
+  }
+  .playbill::before,
+  .playbill::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--ornament);
+    border-radius: calc(var(--radius-lg) - 7px);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .playbill::after {
+    inset: 11px;
+    opacity: 0.16;
+  }
+  .pb-kicker {
+    font-size: 0.7rem;
+    letter-spacing: 0.46em;
+    text-indent: 0.46em;
+    color: var(--muted);
+  }
+  .pb-title {
+    margin-top: 10px;
+    font-family: var(--font-hand);
+    font-size: clamp(1.7rem, 5vw, 2.5rem);
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+  .pb-sub {
+    margin-top: 8px;
+    font-size: 0.84rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .pb-divider {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-2);
+  }
+  .pb-divider i {
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+  }
+  .pb-divider i:last-child {
+    background: linear-gradient(90deg, var(--ornament), transparent);
+  }
+
+  /* ---------- 章节 ---------- */
+  .sec {
+    margin-top: 8px;
+  }
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .sec-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ornament), transparent);
+    opacity: 0.5;
+  }
+  .sec-title .ord {
+    font-family: var(--font-hand);
+    font-size: 1.3rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+
+  /* ---------- 订阅地址 ---------- */
+  .feed-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+  }
+  .feed-box code {
+    flex: 1;
+    min-width: 240px;
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  .copy-btn {
+    flex: none;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: color 0.25s, background 0.25s, border-color 0.25s;
+  }
+  .copy-btn:hover {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+  }
+  .copy-btn.done {
+    color: var(--bg);
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+  }
+  .hint {
+    margin-top: 14px;
+    font-size: 0.86rem;
+    line-height: 1.9;
+    color: var(--muted);
+  }
+  .hint strong {
+    color: var(--accent);
+  }
+  .hint a {
+    color: var(--accent-2);
+  }
+
+  /* ---------- 文章清单 ---------- */
+  .feed-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .feed-list li {
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    transition: border-color 0.3s, transform 0.3s var(--ease-water);
+  }
+  .feed-list li:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+  .feed-list .title {
+    font-size: 1.06rem;
+    color: var(--text-strong);
+  }
+  .feed-list .title:hover {
+    color: var(--accent);
+  }
+  .feed-list .date {
+    margin-left: 10px;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    color: var(--accent-2);
+  }
+  .feed-list .desc {
+    margin-top: 6px;
+    font-size: 0.87rem;
+    color: var(--muted);
+  }
+  .feed-list .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+  }
+  .feed-list .tags span {
+    padding: 1px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-copy]');
+  if (btn) {
+    const label = btn.querySelector<HTMLElement>('[data-copy-label]');
+    const original = label?.textContent ?? '复制地址';
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const fallback = (text: string): boolean => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:-999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch {
+        return false;
+      }
+    };
+
+    btn.addEventListener('click', async () => {
+      const text = btn.dataset.copy ?? '';
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch {
+        ok = fallback(text);
+      }
+      btn.classList.toggle('done', ok);
+      if (label) label.textContent = ok ? '已复制 ✓' : '复制失败，手动选中吧';
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        btn.classList.remove('done');
+        if (label) label.textContent = original;
+      }, 2000);
+    });
+  }
+</script>

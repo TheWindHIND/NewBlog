@@ -30,7 +30,8 @@
   - `--virtual-time-budget` 要 >15s；`--user-data-dir` 每次给新目录避免单例锁冲突。
 - **给 localStorage 依赖的页面「催熟」**：种子页**已留档 `raw-assets/ref/seed.html`** ——
   构建后 `mkdir -p dist/__seed && cp raw-assets/ref/seed.html dist/__seed/index.html` 再访问
-  `http://localhost:4321/NewBlog/__seed/?t=ousia`（`t` 换 `pneuma` 看昼场，`&v=<次数>` 控制回访数，默认 40；`v=1` 看「刚开门」）。
+  `http://localhost:4321/NewBlog/__seed/?t=ousia`（`t` 换 `pneuma` 看昼场，`&v=<次数>` 控制回访数，默认 40；`v=1` 看「刚开门」；
+  **`&to=about|now|posts...` 换落地页**，默认 `room`）。
   ⚠️ 种子页会 `localStorage.setItem` 写 `catnest.theme` / `catnest.visits` /
   `catnest.achievements` / `catnest.read` / `catnest.feed.*` 后 `location.replace(...room/)`。
   ⚠️ `catnest.theme` 是**裸字符串**（`'ousia'`/`'pneuma'`，BaseLayout 内联脚本直接全等比较），
@@ -42,6 +43,18 @@
   路径会退回默认 `fill:black` → 表现为页面顶部「一条黑线」。
   **需要复用 SVG 几何时渲染成真实节点，别用 `<use>`**；必须用 `<use>` 时把 `fill`/`stroke`
   写在 `<use>` 元素上靠继承。同类：`set:html` 注入的 SVG 也拿不到 scoped 样式 → 用 `var()` 兜底。
+- ⚠️ **`<img width="520" height="520">` 的宽高属性 = 作者级的 presentational hint**
+  （`width:520px; height:520px`）。CSS 只写 `width:100%` **只覆盖宽度，高度仍是 520px** ——
+  210px 宽的栏里图片被纵向拉长 2.5 倍（关于页头像就是这么「变形」的）。
+  **凡是靠 width/height 属性预留 CLS 的图，作者 CSS 里必须补 `height:auto`**（要固定比例再补 `aspect-ratio`）。
+  修法示例：`about.astro` 的 `.portrait img { width:100%; height:auto; aspect-ratio:1/1; object-fit:cover; }`。
+
+## 「今日一句」机制（Footer）
+- 语录源 `consts.ts` 的 `QUOTES[]`；取句公式 `YYYY*372 + (M+1)*31 + D` 再取模。
+- **双层**：构建时按**构建日**渲染一条（无 JS 兜底）→ Footer 里 `<script type="application/json"
+  id="site-quotes" set:html={JSON.stringify(QUOTES)}/>` 供前端读，同文件 `<script>` 用**访客本地日期**
+  重算 index 覆盖 `[data-quote-text]`。纯静态站只能靠这一手实现「真的每天换」。
+- Astro 会把这种小脚本**内联**进 HTML（不是外链 bundle），全站每页多约 300B，可接受。
 
 ## 芙芙的小包厢（`/room`，2026-10-03 三次改版后的现状）
 - 名称：大标题「**芙芙的小包厢**」+ kicker「LA LOGE DE FURINA」（小包厢＝歌剧院包厢）；
@@ -63,6 +76,11 @@
 - 配色令牌 `--room-*`（`tokens.css` 昼夜各一套）。**夜场 `--room-wood` 曾 #2b4364 压墙 #16243c 对比过低**
   → 已改 **#375681** + 木器统一补 `--ornament` 勾边；**昼场 `--room-wall-2` 曾 #f3e9d6**（墙裙看不见）
   → 改 **#ecdcc0**。木器/护墙板改色前务必两套主题都出图核对。
+- **墙上挂画（芙宁娜海报，`data-need=20`）**：源图 1181×1181 → `public/images/room/furina-poster.webp`（340px/37KB）。
+  结构＝挂钩 → 吊线 → 木框 80×80（`--room-wood`）→ 奶油卡纸 `#f4ecdc` → 画心 66×66（`xMidYMid slice`）
+  → 玻璃反光三角 → 水滴纹名牌（`<path>` 画，别用 `<text>`）。位置 x702–782 / y152–232（右墙、相框下方）。
+  ⚠️ 挂钩必须落在中间相框（x712–756 / y106–140）**下沿之外**：原来放 (742,133) 落在相框里，
+  读起来像「海报挂在相框上」；改 (742,144) 才对。
 - ⚠️ **家具用色别直接吃 `--accent/--accent-2`**：昼场 `accent-2` 是金、夜场是别的 ——
   绿植照 `--accent` 画，昼场就成了橄榄金"塑料叶"。植物类一律写**真绿**常量（#7fae72/#9cc48a/#6f9e64…）。
 - ⚠️ 两个"我自己造又自己踩"的形：①炉膛开口做太大（x42–126/y208–322）＝墙上一块黑洞，
@@ -98,6 +116,44 @@
     令牌在 `tokens.css` 昼夜各一套。卷曲纹样用「螺旋点列 + 变宽带拟合」生成，别用等宽描边。
     ⚠️ `ribbon(pts, widths)` 的 widths 必须与 pts **等长**，少一个会算出 NaN 让整段路径失效
     （已加兜底：宽度数组短了就沿用最后一档）。
+
+## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`，2026-10-04 修完）
+症状：鼠标上下移动时下巴出现**双层重影**；尾巴摆动时**割裂**。
+- **双下巴根因**：头层切割线原来压在下巴深色轮廓（x=50% 处 59.7–60.8%）上，
+  ±0.7% 羽化带随头位移 → 半透明下巴复印一份。
+  **修法**：切割线挪到 61.8–63% 的**平坦颈肉**上（两侧放进发丝内部），羽化 3 → **1.4px**，
+  且 **`transform-origin` 压在切割线上（`.head-wrap { 50% 62% }`）** —— 于是竖直响应改用
+  **`scaleY`（点头）而不是 `translateY`**：绕枢轴缩放时枢轴线是不动线，切缝竖直位移 ≈ 0。
+  JS 公式：`translate(cx*1.3%, cy*0.12%) rotate(cx*2.4deg) scaleY(1 - cy*0.05)`。
+  旋转带来的侧向扫动 ∝ 距枢轴水平距离，经逐列核对 x42–70%（颈/领口）位移 ≤6px 可接受，
+  两侧大多落在透明背景/发丝内部。
+- **尾巴割裂根因**：尾巴遮罩多边形位置偏了约 6%（偏上偏左），尾巴层几乎被挖空、身体层却留着静止尾巴
+  → 动的碎片叠在静止尾巴上。**修法**：用 `scripts/_grid.cjs 58 60 96 92` 重新读坐标重画轮廓；
+  尾巴从「身体挖洞露出」改为**画在身体之上**（`z-index: 2`），身体挖洞与尾巴遮罩用**同一个外扩多边形**
+  （`offsetPoly`，余量只在根部给：四周是不透明裙摆才补得上，尾尖四周透明、余量无意义）；
+  摆幅收紧：`tail-wag` -3°/4.5°、`tail-wag-fast` -6°/9°（原 ±16° 会让尾尖露缺口）。
+  `TAIL_PIVOT = (66%, 84.5%)`。
+- **验证夹具**：`scripts/_motion-fixture.cjs` —— 把 `dist/room/index.html` 复制到 `dist/__motion/` 并注入脚本，
+  用**和生产一致的公式**把猫钉在任意姿态：`?cx=0.9&cy=1&tail=9`（cx 左右 ±1、cy 上下 ±1、tail 角度）。
+  无头截图 + `crop-ref.cjs` 6× 放大即可复核动效（无头不会真的动鼠标，而生产脚本在
+  reduced-motion 下又不挂 `pointermove`，所以只能这样直接写 inline transform 绕开守卫）。
+  ⚠️ 偶发整层头顶空白 = `decoding="async"` 解码竞态，**重跑即正常，别当 bug 改代码**。
+
+## RSS 与 `/feed` 页
+- **浏览器直接打开 `/rss.xml` 显示一棵 XML 树是正常现象**——RSS 是给阅读器读的格式，不是给人读的页面。
+- **XSLT 方案已废弃**：给 rss.xml 挂 `<?xml-stylesheet ... rss-style.xml?>` 后，Chromium 会顶
+  大红警告条「This site uses XSLT; that functionality is being removed from this browser very soon」
+  → 不可用。`rss.xml.js` 保持原样、不要再用 XSLT。
+- 人类入口改为 **`src/pages/feed.astro`**：playbill 页头 + 订阅地址卡（`code[data-feed-url]` + 复制按钮，
+  clipboard + `document.execCommand` 兜底）+ 说明 + 最新文章清单。Footer 链接 `${B}/feed`。
+- head 里的 `<link rel="alternate" type="application/rss+xml" href=".../rss.xml">` **保留**（阅读器自动发现）。
+
+## 关于页背景插画（`about.astro`）
+- 源图 1376×768 → `public/images/about/room-night.webp`（1380px/49KB）；`.page-bg` 固定铺满 + `::after` 压主题色。
+- **必须按主题分档**（一张暗夜景图直接压昼场香槟底，整页会发灰）：
+  `tokens.css` 里 `--about-img-o` / `--about-veil-o` / `--about-photo-o`
+  ＝ **夜 0.55 / 0.62 / 0.42，昼 0.4 / 0.87 / 0.16**；`about.astro` 用 `var(--about-*-o, 回退)`。
+- 「枫」字是 `<button class="qq-name" data-qq="2927015997">`，点击复制 QQ（clipboard + 兜底，2s 还原）。
 
 ## 参考图 → 矢量 的工序（本项目已验证）
 1. `scripts/probe-refs.cjs <图> [列数]`：降采样成**字符轮廓**，直接读比例，不用出图。
