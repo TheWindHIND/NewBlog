@@ -36,22 +36,32 @@ const BODY_OVERLAP = 3.0;
 const HEAD_FEATHER = 1.4;
 
 // —— 尾巴轮廓（百分比，顺时针：先外缘从尾尖到根部，再内缘沿身体侧回去）——
+// ⚠️ 坐标是用 scripts/_probe-tail.cjs 逐行扫描量出来的（每一行尾巴可见白色的左右边界）：
+//    内缘必须绕开**手指**（y79~82% 处手占 x68.2~76.2），外缘要贴到尾巴真实宽度
+//    （y74~81% 处可到 x≈91%）。手绘估算的多边形会把手指圈进来 → 手指跟着尾巴飞 = 割裂。
 const TAIL_POLY = [
-  [76.6, 64.6], [79.4, 63.8], [82.4, 64.2], [85.0, 65.9], [87.2, 68.2],
-  [88.9, 71.0], [89.9, 74.0], [90.2, 76.6], [89.6, 79.2], [88.1, 81.6],
-  [85.7, 83.6], [82.0, 85.1], [77.8, 86.1], [73.2, 86.6], [68.6, 86.6], [64.0, 86.0],
-  [63.0, 83.2], [63.6, 81.2], [66.0, 80.0], [69.8, 79.6], [73.2, 79.2],
-  [75.0, 77.0], [75.6, 73.4], [75.7, 69.4], [75.9, 66.6],
+  // 尾尖（上端）
+  [78.3, 67.4], [77.9, 66.2], [79.4, 65.4], [81.4, 65.4], [83.5, 66.0],
+  // 外缘（右侧一路下来）
+  [85.0, 67.0], [86.6, 68.2], [87.7, 69.4], [89.3, 70.8], [90.0, 71.8],
+  [90.8, 72.8], [90.9, 74.0], [90.8, 75.0], [90.5, 76.2], [90.8, 77.4],
+  [90.0, 78.8], [89.2, 79.6], [91.3, 80.6], [91.1, 81.7], [90.8, 82.6],
+  [89.4, 83.5], [89.2, 84.5], [89.8, 85.6],
+  // 底缘（含蝴蝶结垂下的飘带，到 y≈87.6%）
+  [87.6, 86.6], [84.0, 87.2], [79.0, 87.5], [74.0, 87.6], [68.8, 87.0],
+  // 内缘（自下而上，贴着裙摆外沿 → 手指外沿 → 尾尖）
+  [69.6, 85.4], [70.3, 84.5], [72.2, 83.3], [74.4, 82.3], [77.2, 81.3],
+  [78.4, 80.2], [78.2, 79.2], [78.9, 78.2], [79.4, 77.2], [81.0, 76.2],
+  [81.0, 75.2], [80.8, 74.2], [80.9, 73.2], [80.1, 72.2], [79.3, 71.2],
+  [77.6, 70.2], [76.6, 69.1], [76.4, 68.0], [76.7, 67.2],
 ];
-/** 尾巴旋转轴心（尾巴与裙子交界处，CSS 里的 transform-origin 要跟它一致） */
-const TAIL_PIVOT = [66.0, 84.5];
+/** 尾巴旋转轴心（尾巴可见根部 —— 放在这里，旋转时根部几乎不动，不会与裙摆脱开） */
+const TAIL_PIVOT = [70.5, 85.5];
 /**
- * 尾巴遮罩外扩（像素）。只在**根部**（贴着裙子那侧）留余量：
- * 那里四周是不透明的裙摆像素，余量能真正补上旋转时的缝；
- * 尾尖四周是透明背景，留余量也补不出像素，反而会把上方零散发丝卷进来 →
- * 所以尾尖贴轮廓裁（2px），靠**收小摆幅**避免缺口。
+ * 尾巴遮罩外扩（像素）：只补抗锯齿的 1px，**绝不能往根部加余量** ——
+ * 根部的余量会把手/袖口/裙摆的像素圈进尾巴层，一旋转就跟着飞走（＝割裂的真凶）。
  */
-const tailMargin = (xPct) => 2 + 8 * Math.max(0, Math.min(1, (72 - xPct) / 8));
+const TAIL_MARGIN = 1.0;
 
 const pct = (p, total) => Math.round((p / 100) * total);
 
@@ -138,7 +148,78 @@ function offsetPoly(pts, marginOf) {
     (feather ? ' filter="url(#f)"' : '') +
     `/></svg>`;
 
-  const TAIL_OUT = offsetPoly(TAIL_POLY, tailMargin);
+  const TAIL_OUT = offsetPoly(TAIL_POLY, () => TAIL_MARGIN);
+
+  /**
+   * 把遮罩「沿着深色线稿」向外生长若干轮。
+   *
+   * 为什么需要：手绘多边形是折线，压不住尾巴的曲线描边 —— 折线外侧会残留几像素
+   * 尾巴轮廓在**身体层**里，尾巴一转就露出这些静止的黑色碎片（还是「割裂」）。
+   * 生长规则：只吃「深色线稿」或「透明背景」的像素，碰到皮肤/毛发/衣料就停；
+   * 再加一条保护：挨着皮肤的深色像素不吃（那是手的描边，不能带走）。
+   */
+  const growMaskIntoInk = async (maskPNG, rounds) => {
+    const { data: md, info: mi } = await sharp(maskPNG).raw().toBuffer({ resolveWithObject: true });
+    const mw = mi.width;
+    const mh = mi.height;
+    const { data: sd, info: si } = await sharp(img).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const sc = si.channels;
+
+    const isDark = (i) => {
+      const p = i * sc;
+      const a = sd[p + 3];
+      if (a < 40) return true; // 透明：可以吃（吃进来也是空的，无害）
+      if (a < 160) return false; // 半透明边缘：别动
+      const lum = 0.299 * sd[p] + 0.587 * sd[p + 1] + 0.114 * sd[p + 2];
+      if (lum >= 150) return false;
+      // 挨着皮肤就不吃（保住手指/手的描边）
+      const x = i % mw;
+      const y = (i - x) / mw;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= mw || ny >= mh) continue;
+          const q = (ny * mw + nx) * sc;
+          const r = sd[q], g = sd[q + 1], b = sd[q + 2], a2 = sd[q + 3];
+          if (a2 < 200) continue;
+          if (r > g && g > b && r - b > 25 && r > 150) return false; // 皮肤
+        }
+      }
+      return true;
+    };
+
+    let mask = new Uint8Array(mw * mh);
+    for (let i = 0; i < mask.length; i++) mask[i] = md[i * mi.channels] > 128 ? 1 : 0;
+
+    for (let r = 0; r < rounds; r++) {
+      const next = Uint8Array.from(mask);
+      for (let y = 0; y < mh; y++) {
+        for (let x = 0; x < mw; x++) {
+          const i = y * mw + x;
+          if (mask[i]) continue;
+          const near =
+            (x > 0 && mask[i - 1]) ||
+            (x < mw - 1 && mask[i + 1]) ||
+            (y > 0 && mask[i - mw]) ||
+            (y < mh - 1 && mask[i + mw]);
+          if (near && isDark(i)) next[i] = 1;
+        }
+      }
+      mask = next;
+    }
+
+    const rgba = Buffer.alloc(mw * mh * 4);
+    for (let i = 0; i < mask.length; i++) {
+      const v = mask[i] ? 255 : 0;
+      rgba[i * 4] = v;
+      rgba[i * 4 + 1] = v;
+      rgba[i * 4 + 2] = v;
+      rgba[i * 4 + 3] = 255;
+    }
+    return sharp(rgba, { raw: { width: mw, height: mh, channels: 4 } }).png().toBuffer();
+  };
+
   const headMask = await sharp(Buffer.from(cutPoly(HEAD_CUT, 'above', HEAD_FEATHER))).png().toBuffer();
   const bodyMask = await sharp(
     Buffer.from(
@@ -149,7 +230,9 @@ function offsetPoly(pts, marginOf) {
       )
     )
   ).png().toBuffer();
-  const tailMask = await sharp(Buffer.from(polySVG(TAIL_OUT, 1.1))).png().toBuffer();
+  const rawTailMask = await sharp(Buffer.from(polySVG(TAIL_OUT, 0.8))).png().toBuffer();
+  // 再沿线稿生长 6 轮：把尾巴自己的描边整条吃进遮罩，身体层才不留静止的黑色残片
+  const tailMask = await growMaskIntoInk(rawTailMask, 6);
 
   // ---------- 头部：切线以上，且挖掉尾巴 ----------
   const head = await sharp(img)

@@ -26,6 +26,9 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 ---
 
 <BaseLayout title={d.title} description={d.description}>
+  {/* 背景插画（页首一条渐隐的插画带）+ 上缘柔光纱：压住标题区又不留硬边 */}
+  <div class="post-bg" aria-hidden="true"></div>
+  <div class="post-veil" aria-hidden="true"></div>
   <SwordProgress />
   <CurtainOpen
     title={d.title}
@@ -108,6 +111,41 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 </BaseLayout>
 
 <style>
+  /* ---------- 背景插画 ---------- */
+  /* 文章很长，所以不做「固定铺满整屏」（读到下面还会透出图，伤可读性），
+     改成页首一条**渐隐的插画带**：上缘淡入、下缘淡出，正文落到主题底色上。 */
+  .post-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: min(92vh, 820px);
+    z-index: -1;
+    background-image: var(--post-bg);
+    background-size: cover;
+    background-position: 68% 30%;
+    background-repeat: no-repeat;
+    opacity: var(--post-img-o, 0.5);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 58%, transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 58%, transparent 100%);
+  }
+  /* 上缘柔光纱：用遮罩（只影响 alpha）而不是「主题色→透明」渐变，
+     否则 sRGB 插值会在中段混出一层灰；这样页头区被压住，往下自然散开、没有矩形边。 */
+  .post-veil {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: min(92vh, 820px);
+    z-index: -1;
+    background: var(--bg);
+    opacity: var(--post-veil-o, 0.9);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 15%, transparent 58%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 15%, transparent 58%);
+  }
+
   .post {
     padding-block: 40px 20px;
     max-width: 880px;

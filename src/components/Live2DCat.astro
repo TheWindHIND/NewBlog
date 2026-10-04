@@ -74,7 +74,7 @@ const src = (n: string) => `${B}/images/cat/${n}`;
   /* 尾巴：绕与身体的交界处旋转（对应 slice-cat.cjs 的 TAIL_PIVOT）
      尾巴**画在身体之上**（不再靠身体挖洞露出）——挖洞会在旋转时被身体边缘切掉 */
   .tail {
-    transform-origin: 66% 84.5%;
+    transform-origin: 70.5% 85.5%;  /* 与 slice-cat.cjs 的 TAIL_PIVOT 一致：尾巴可见根部 */
     animation: tail-wag 3.6s var(--ease-water) infinite;
     z-index: 2;
   }

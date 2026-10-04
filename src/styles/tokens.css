@@ -93,6 +93,11 @@
   --about-veil-o: 0.62;
   --about-photo-o: 0.42;
 
+  /* 文章页背景插画（秋千·夜）：页首渐隐插画带 + 页头遮盖强度 */
+  --post-bg: url("/NewBlog/images/post/swing-night.webp");
+  --post-img-o: 0.5;
+  --post-veil-o: 0.86;
+
   /* 夜场天鹅绒幕布（深海绸缎） */
   --curtain-a: #0d1a30;
   --curtain-b: #1b3055;
@@ -180,6 +185,11 @@
   --about-img-o: 0.4;
   --about-veil-o: 0.87;
   --about-photo-o: 0.16;
+
+  /* 文章页背景插画（昼场：同一张夜图，露得更少才不脏） */
+  --post-bg: url("/NewBlog/images/post/swing-night.webp");
+  --post-img-o: 0.34;
+  --post-veil-o: 0.94;
 
   /* 昼场幕布（香槟金绸缎） */
   --curtain-a: #f3e6c6;

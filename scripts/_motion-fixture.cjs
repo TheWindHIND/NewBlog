@@ -18,10 +18,19 @@ const out = path.join(outDir, 'index.html');
 let html = fs.readFileSync(src, 'utf8');
 
 const inject = `
+<style id="fx"></style>
 <script>
   // 与 Live2DCat.astro 的视线跟随公式逐字一致
   (() => {
     const p = new URLSearchParams(location.search);
+
+    // bg=magenta：把房间布景藏起来、页面刷成品红 —— 图层若缺像素就会漏成品红，一眼可见
+    if (p.get('bg') === 'magenta') {
+      document.getElementById('fx').textContent =
+        '.scene{display:none!important}body{background:#ff00ff!important}' +
+        '.stage,.cat-room{background:transparent!important}';
+    }
+
     const cx = parseFloat(p.get('cx') || '0');
     const cy = parseFloat(p.get('cy') || '0');
     const tailDeg = p.get('tail');

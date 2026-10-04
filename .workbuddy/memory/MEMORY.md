@@ -138,17 +138,23 @@
   JS 公式：`translate(cx*1.3%, cy*0.12%) rotate(cx*2.4deg) scaleY(1 - cy*0.05)`。
   旋转带来的侧向扫动 ∝ 距枢轴水平距离，经逐列核对 x42–70%（颈/领口）位移 ≤6px 可接受，
   两侧大多落在透明背景/发丝内部。
-- **尾巴割裂根因**：尾巴遮罩多边形位置偏了约 6%（偏上偏左），尾巴层几乎被挖空、身体层却留着静止尾巴
-  → 动的碎片叠在静止尾巴上。**修法**：用 `scripts/_grid.cjs 58 60 96 92` 重新读坐标重画轮廓；
-  尾巴从「身体挖洞露出」改为**画在身体之上**（`z-index: 2`），身体挖洞与尾巴遮罩用**同一个外扩多边形**
-  （`offsetPoly`，余量只在根部给：四周是不透明裙摆才补得上，尾尖四周透明、余量无意义）；
-  摆幅收紧：`tail-wag` -3°/4.5°、`tail-wag-fast` -6°/9°（原 ±16° 会让尾尖露缺口）。
-  `TAIL_PIVOT = (66%, 84.5%)`。
+- **尾巴割裂的真凶（2026-10-04 才算彻底查清）**：手绘多边形切进了**手指/袖口/裙摆**像素 ——
+  那些像素被算进尾巴层，尾巴一转就跟着飞走；同时身体层对应位置被挖空 → 两道裂。
+  修法三件套：
+  1. **轮廓逐行量出来**：`scripts/_probe-tail.cjs` 按行打印「透明/线稿/白毛/皮肤/蓝」分段，
+     用真实边界重写 `TAIL_POLY`（内缘必须绕开手指：y79~82% 处手占 x68.2~76.2；外缘要贴到 x≈91%）。
+     核对工具 `scripts/_chk-tailpoly.cjs`（把多边形描边画在原画上）。
+  2. **遮罩不许往根部扩余量**：`TAIL_MARGIN = 1.0` 常量，只补抗锯齿；再 `growMaskIntoInk()`
+     **沿深色线稿生长 6 轮**把尾巴自己的描边整条吃进遮罩 —— 否则身体层残留静止的黑色轮廓碎片
+     （折线压不住曲线描边）。生长时挨着皮肤的深色像素不吃（保住手的描边）。
+  3. **枢轴移到尾巴可见根部** `TAIL_PIVOT = (70.5, 85.5)`（旧值 66,84.5 埋在裙子里，基部会摆 3–5px）。
+     尾巴仍画在身体**之上**（画在下面会被身体边缘切掉）。
+  摆幅：`tail-wag` -3°/4.5°、`tail-wag-fast` -6°/9°。
 - **验证夹具**：`scripts/_motion-fixture.cjs` —— 把 `dist/room/index.html` 复制到 `dist/__motion/` 并注入脚本，
-  用**和生产一致的公式**把猫钉在任意姿态：`?cx=0.9&cy=1&tail=9`（cx 左右 ±1、cy 上下 ±1、tail 角度）。
-  无头截图 + `crop-ref.cjs` 6× 放大即可复核动效（无头不会真的动鼠标，而生产脚本在
-  reduced-motion 下又不挂 `pointermove`，所以只能这样直接写 inline transform 绕开守卫）。
-  ⚠️ 偶发整层头顶空白 = `decoding="async"` 解码竞态，**重跑即正常，别当 bug 改代码**。
+  用**和生产一致的公式**把猫钉在任意姿态：`?cx=0.9&cy=1&tail=9`（cx 左右 ±1、cy 上下 ±1、tail 角度）；
+  **`?bg=magenta`** 会藏起房间布景、页面刷成品红 —— 图层缺像素就漏品红，排障神器。
+  另配 `scripts/_chk-tail-layers.cjs`：tail/body/head 三层分别衬品红并排放大，直接看每层装了什么。
+  ⚠️ 偶发整层空白 = `decoding="async"` 解码竞态，**重跑即正常，别当 bug 改代码**。
 
 ## RSS 与 `/feed` 页
 - **浏览器直接打开 `/rss.xml` 显示一棵 XML 树是正常现象**——RSS 是给阅读器读的格式，不是给人读的页面。
@@ -165,6 +171,20 @@
   `tokens.css` 里 `--about-img-o` / `--about-veil-o` / `--about-photo-o`
   ＝ **夜 0.55 / 0.62 / 0.42，昼 0.4 / 0.87 / 0.16**；`about.astro` 用 `var(--about-*-o, 回退)`。
 - 「枫」字是 `<button class="qq-name" data-qq="2927015997">`，点击复制 QQ（clipboard + 兜底，2s 还原）。
+
+## 文章页背景插画（`PostLayout.astro`）
+- 源图 1439×794 → `public/images/post/swing-night.webp`（1439px/53KB，原图留档 `raw-assets/post/swing-src.jpg`）。
+- **不做「固定铺满整屏」**（长文读到下面还透图会伤可读性），而是页首一条**渐隐插画带**：
+  `.post-bg` 绝对定位、`height: min(92vh,820px)`、`background-position: 68% 30%`（把人物推到正文栏右侧），
+  **用 `mask-image` 做上淡入/下淡出**；再叠一层 `.post-veil`（纯 `var(--bg)` + `mask-image` 上缘压住标题区）。
+  ⚠️ 别用「主题色→透明」的渐变当纱：sRGB 插值会在中段混出一层灰；要用 mask（只影响 alpha）。
+- 令牌：`--post-bg` / `--post-img-o`（夜 0.5、昼 0.34）/ `--post-veil-o`（夜 0.86、昼 0.94）。
+
+## 资料库交接文档
+- 《藏枫的猫窝》项目交接说明书已建在资料库个人空间：
+  `https://www.workbuddy.cn/space/d/tniMGaTcBsTXgGYZZik12o`
+  内容＝快速上手 / 技术栈 / 目录结构 / 设计系统 / 页面清单 / 核心机制 / 资产管线 / 验证工作流 / 铁律与坑 / 协作约定 / 待办。
+  源文件留档 `raw-assets/handoff.md`（改完可用 `doc/create_doc.py --node-block-id <id> --confirm-overwrite` 覆盖）。
 
 ## 参考图 → 矢量 的工序（本项目已验证）
 1. `scripts/probe-refs.cjs <图> [列数]`：降采样成**字符轮廓**，直接读比例，不用出图。
