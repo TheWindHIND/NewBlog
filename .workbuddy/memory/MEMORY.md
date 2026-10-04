@@ -9,6 +9,17 @@
 ## 环境坑（务必记住）
 - 本 bash 中 git 需用系统版：`"/c/Program Files/Git/cmd/git.exe" -c http.schannelCheckRevoke=false push`
   （PATH 默认的 PortableGit 不认该配置，代理环境下 TLS 会失败）
+- ⚠️ **本机 `github.com` 的 HTTPS 时说挂就挂**（2026-10-04 连续 502/000，而 `api.github.com`、`codeload` 正常）。
+  备用通道 = **SSH over 443**（已认证为 TheWindHIND）：
+  ```
+  GIT_SSH_VARIANT=ssh GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+  "/c/Program Files/Git/cmd/git.exe" push ssh://git@ssh.github.com:443/TheWindHIND/NewBlog.git main
+  ```
+  - 必须 `GIT_SSH_VARIANT=ssh`，否则报 `ssh variant 'simple' does not support setting port`；
+    且 ssh 命令得写成 `ssh …`（走 PATH），写绝对路径带空格会被 git 当成无引号的命令而报 `C:/Program: No such file`。
+  - 用这种方式推送**不改 origin**（origin 仍是 HTTPS），日常 push 还是先试默认那条。
+  - 推送后用 `curl -s https://api.github.com/repos/TheWindHIND/NewBlog/actions/runs?per_page=1`
+    看 `conclusion`，再 curl 线上页面抽查关键字（feed 链接 / data-qq / 图片 200）确认真的生效。
 - GitHub API 用 curl 时加 `--ssl-revoke-best-effort`
 - GitHub 令牌存在 Windows 凭据管理器，push 自动认证；如失效需用户重新生成并 `git credential approve`
 - **本地 `astro build` 必先移走 `dist/.prerender`**：Astro 收尾会删这个临时目录，
