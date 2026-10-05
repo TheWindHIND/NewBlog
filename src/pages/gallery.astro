@@ -7,12 +7,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import Ornament from '../components/Ornament.astro';
 import { getCollection } from 'astro:content';
+import { mediaUrl } from '../lib/media';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const items = (await getCollection('gallery')).sort(
   (a, b) => (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0)
 );
-const groups = [...new Set(items.map((i) => i.data.group))];
+/** 展厅顺序固定下来，免得加一张图就打乱原来的排布 */
+const GROUP_ORDER = ['站点视觉', '站点插画', '文章插画', '友链'];
+const groups = [...new Set(items.map((i) => i.data.group))].sort((a, b) => {
+  const ia = GROUP_ORDER.indexOf(a);
+  const ib = GROUP_ORDER.indexOf(b);
+  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+});
 ---
 
 <BaseLayout title="图库" description="藏枫的猫窝的剧院长廊——照片与画">
@@ -35,9 +42,9 @@ const groups = [...new Set(items.map((i) => i.data.group))];
             {items
               .filter((i) => i.data.group === g)
               .map((i) => (
-                <figure class="frame" data-lightbox-item data-src={i.data.src} data-alt={i.data.alt}>
+                <figure class="frame" data-lightbox-item data-src={mediaUrl(i.data.src)} data-alt={i.data.alt}>
                   <span class="frame-inner">
-                    <img src={i.data.src} alt={i.data.alt} loading="lazy" />
+                    <img src={mediaUrl(i.data.src)} alt={i.data.alt} loading="lazy" />
                   </span>
                   <figcaption>{i.data.alt}</figcaption>
                 </figure>

@@ -7,7 +7,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import Ornament from '../components/Ornament.astro';
 import Live2DCat from '../components/Live2DCat.astro';
-import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES } from '../consts';
+import { SITE, ACHIEVEMENTS, CAT_NEST_STAGES, FRIENDS } from '../consts';
+import { mediaUrl } from '../lib/media';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 /** 页头横幅 / 整页氛围背景 */
@@ -98,6 +99,48 @@ const cast = [
           这只猫会在你每次打开猫窝时鞠躬——它由三层立绘拼成，会眨眼、会看着你的鼠标、会摇尾巴。
         </p>
       </div>
+    </section>
+
+    <Ornament motif="eye" label="同台" />
+
+    <!-- 同台：友链 -->
+    <section class="sec">
+      <h2 class="sec-title"><span class="ord">同台</span>FELLOW ACTS</h2>
+      <p class="sec-sub">戏台不止一个座位——这些是我常去串门的窝。</p>
+      <ul class="links">
+        {
+          FRIENDS.map((f) => {
+            const host = f.url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+            return (
+              <li class="link-card">
+                <a href={f.url} target="_blank" rel="noopener noreferrer nofollow">
+                  <span
+                    class="lc-cover"
+                    style={`--cover:url("${mediaUrl(f.cover)}")`}
+                    aria-hidden="true"
+                  />
+                  <span class="lc-body">
+                    <span class="lc-avatar">
+                      <img
+                        src={mediaUrl(f.avatar)}
+                        alt={`${f.name} 的头像`}
+                        width="72"
+                        height="72"
+                        loading="lazy"
+                      />
+                    </span>
+                    <span class="lc-text">
+                      <strong>{f.name}</strong>
+                      {f.desc && <em>{f.desc}</em>}
+                      <span class="lc-host">{host}</span>
+                    </span>
+                  </span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
     </section>
 
     <Ornament motif="hat" label="机关" />
@@ -456,6 +499,97 @@ const cast = [
     letter-spacing: 0.18em;
     color: var(--accent);
     background: var(--accent-soft);
+  }
+
+  /* ---------- 同台（友链） ---------- */
+  .links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+    gap: 18px;
+  }
+  .link-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.35s var(--ease-water), border-color 0.35s;
+  }
+  .link-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-strong);
+  }
+  .link-card a {
+    display: block;
+    color: inherit;
+  }
+  /* 封面：顶到卡片边缘，下缘用遮罩淡出（只改 alpha，昼夜都融得进） */
+  .lc-cover {
+    display: block;
+    height: 124px;
+    background-image: var(--cover);
+    background-size: cover;
+    background-position: center 38%;
+    background-repeat: no-repeat;
+    transform-origin: 50% 20%;
+    transition: transform 0.55s var(--ease-water);
+    -webkit-mask-image: linear-gradient(180deg, #000 0 60%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0 60%, transparent 100%);
+  }
+  .link-card:hover .lc-cover {
+    transform: scale(1.05);
+  }
+  .lc-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 0 18px 16px;
+  }
+  /* 圆框头像：上移压在封面上，外圈描一道主题线 */
+  .lc-avatar {
+    flex: none;
+    width: 72px;
+    height: 72px;
+    margin-top: -34px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--bg-card);
+    box-shadow: 0 0 0 1px var(--ornament), var(--shadow);
+    background: var(--bg-card);
+  }
+  .lc-avatar img {
+    width: 100%;
+    height: 100%;
+    /* img 的 width/height 属性是作者级 presentational hint，必须显式压回正方形 */
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+  }
+  .lc-text {
+    min-width: 0;
+    padding-top: 12px;
+    display: grid;
+    gap: 3px;
+  }
+  .lc-text strong {
+    font-size: 1.02rem;
+    font-family: var(--font-hand);
+    letter-spacing: 0.06em;
+    color: var(--text-strong);
+  }
+  .lc-text em {
+    font-style: normal;
+    font-size: 0.83rem;
+    color: var(--muted);
+  }
+  .lc-host {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--accent-2);
+    word-break: break-all;
   }
 
   /* ---------- 舞台机关 ---------- */

@@ -27,8 +27,9 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 ---
 
 <BaseLayout title={d.title} description={d.description}>
-  {/* 背景插画（页首一条渐隐的插画带）+ 上缘柔光纱：压住标题区又不留硬边 */}
-  <PostBackdrop />
+  {/* 背景插画（页首一条渐隐的插画带）+ 上缘柔光纱：压住标题区又不留硬边
+      —— frontmatter 写了 bg 就用本篇自己的图，否则用主题默认那张 */}
+  <PostBackdrop bg={d.bg} tone={d.bgTone} />
   <SwordProgress />
   <CurtainOpen
     title={d.title}

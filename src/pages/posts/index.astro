@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostBackdrop from '../../components/PostBackdrop.astro';
 import PostCard from '../../components/PostCard.astro';
 import Playbill from '../../components/Playbill.astro';
+import Ornament from '../../components/Ornament.astro';
 import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
 
@@ -10,41 +11,74 @@ const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD 
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
+/** 项目：独立成组排在最前，其余的杂谈仍按年份分幕 */
+const projects = posts.filter((p) => p.data.kind === 'project');
+const essays = posts.filter((p) => p.data.kind !== 'project');
+
 const byYear = new Map<number, typeof posts>();
-for (const p of posts) {
+for (const p of essays) {
   const y = p.data.date.getFullYear();
   if (!byYear.has(y)) byYear.set(y, []);
   byYear.get(y)!.push(p);
 }
 ---
 
-<BaseLayout title="文章" description="藏枫的猫窝的全部文章，按年份归档。">
+<BaseLayout title="文章" description="藏枫的猫窝的全部文章——项目与杂谈，按年份归档。">
   {/* 与文章内页同一张背景插画带（列表页正文是卡片，底图多露一点、纱层更透） */}
   <PostBackdrop variant="list" position="74% 22%" />
   <section class="container">
     <Playbill
       kicker="ALL ARTICLES"
       title="全部剧目"
-      sub={`共 ${posts.length} 篇 · 按年份分幕`}
+      sub={`共 ${posts.length} 篇 · 项目 ${projects.length} · 杂谈 ${essays.length}`}
       motif="quill"
     />
 
     {
-      [...byYear.entries()].map(([year, list]) => (
-        <section class="year-group">
-          <h2 class="year">
-            <Icon name="curtain" size={15} />
-            <span>{year}</span>
-            <em>{list.length} 篇</em>
+      projects.length > 0 && (
+        <section class="board board--projects">
+          <h2 class="board-title">
+            <Icon name="star" size={16} />
+            <span>项目</span>
+            <em>PROJECTS · {projects.length}</em>
           </h2>
+          <p class="board-sub">自己搭的东西——做完了、能访问，顺手把过程写下来。</p>
           <div class="grid">
-            {list.map((post) => (
+            {projects.map((post) => (
               <PostCard post={post} />
             ))}
           </div>
         </section>
-      ))
+      )
     }
+
+    {
+      essays.length > 0 && (
+        <section class="board">
+          <h2 class="board-title">
+            <Icon name="quill" size={16} />
+            <span>杂谈</span>
+            <em>ESSAYS · {essays.length}</em>
+          </h2>
+          {[...byYear.entries()].map(([year, list]) => (
+            <section class="year-group">
+              <h3 class="year">
+                <Icon name="curtain" size={15} />
+                <span>{year}</span>
+                <em>{list.length} 篇</em>
+              </h3>
+              <div class="grid">
+                {list.map((post) => (
+                  <PostCard post={post} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </section>
+      )
+    }
+
+    <Ornament motif="star" label="谢幕" />
   </section>
 </BaseLayout>
 
@@ -52,14 +86,48 @@ for (const p of posts) {
   .container {
     padding-block: 40px 20px;
   }
+  .board {
+    margin-top: 44px;
+  }
+  .board-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    color: var(--accent);
+    font-family: var(--font-hand);
+    letter-spacing: 0.2em;
+  }
+  .board-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ornament), transparent);
+    opacity: 0.55;
+    order: 2;
+  }
+  .board-title em {
+    order: 3;
+    font-style: normal;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .board-sub {
+    margin-top: 8px;
+    font-size: 0.86rem;
+    color: var(--muted);
+  }
   .year-group {
-    margin-top: 38px;
+    margin-top: 30px;
   }
   .year {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     color: var(--accent);
     font-family: var(--font-hand);
     letter-spacing: 0.2em;
@@ -91,7 +159,12 @@ for (const p of posts) {
   .grid {
     margin-top: 16px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* min(100%, …) 是护栏：窄屏（<340px）时列宽退回容器宽，不然会横向溢出 */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 20px;
+  }
+  /* 项目通常只有几篇，卡片大一点更像作品墙 */
+  .board--projects .grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
   }
 </style>

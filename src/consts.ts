@@ -8,6 +8,21 @@ export const SITE = {
   lang: 'zh-CN',
 };
 
+/**
+ * 友链（关于页「同台」区块）
+ *  - cover：卡片封面图；avatar：圆框头像；都支持站内相对路径或外链直链
+ *  - desc 可留空（卡片只显示标题与域名）
+ */
+export const FRIENDS = [
+  {
+    name: "Hi, I'm 柳卿烟",
+    url: 'https://liu-qinyan.github.io/LQY/',
+    cover: 'images/links/lqy-site.webp',
+    avatar: 'images/links/lqy-avatar.webp',
+    desc: '晚风、猫，和写不完的句子。',
+  },
+];
+
 /** 芙宁娜语录（每日轮换） */
 export const QUOTES: string[] = [
   '「这样的荣耀，非我莫属！」',

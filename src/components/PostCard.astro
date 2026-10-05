@@ -1,6 +1,7 @@
 ---
-/** 文章卡片：hover 时边缘探出一只偷看的猫 */
+/** 文章卡片：hover 时边缘探出一只偷看的猫；有 cover 时顶部铺一条渐隐封面带 */
 import type { CollectionEntry } from 'astro:content';
+import { mediaUrl } from '../lib/media';
 
 interface Props {
   post: CollectionEntry<'posts'>;
@@ -9,14 +10,17 @@ const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const { post } = Astro.props;
 const href = `${B}/posts/${post.id}`;
 const d = post.data;
+const cover = mediaUrl(d.cover);
 ---
 
 <article class="post-card">
   <a href={href}>
+    {cover && <span class="cover" aria-hidden="true" style={`--cover:url("${cover}")`}></span>}
     <div class="meta">
       <time datetime={d.date.toISOString()}>
         {d.date.getFullYear()} 年 {d.date.getMonth() + 1} 月 {d.date.getDate()} 日
       </time>
+      {d.kind === 'project' && <span class="kind">项目</span>}
       {d.series && <span class="series">{d.series}</span>}
     </div>
     <h3>{d.title}</h3>
@@ -72,6 +76,32 @@ const d = post.data;
     background: var(--accent-2-soft);
     padding: 1px 9px;
     border-radius: 999px;
+  }
+  .kind {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    padding: 0 9px;
+    border-radius: 999px;
+    letter-spacing: 0.1em;
+  }
+  /* 封面带：铺满卡片顶部，用遮罩把下缘淡出 —— 遮罩只改 alpha，
+     所以不管卡片底色是昼是夜都能自然融进去，不留一条硬缝。 */
+  .cover {
+    display: block;
+    height: 132px;
+    margin: -22px -22px 16px;
+    background-image: var(--cover);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform-origin: 50% 20%;
+    transition: transform 0.55s var(--ease-water);
+    -webkit-mask-image: linear-gradient(180deg, #000 0 58%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0 58%, transparent 100%);
+  }
+  .post-card:hover .cover {
+    transform: scale(1.045);
   }
   h3 {
     margin-top: 8px;

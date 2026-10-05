@@ -9,6 +9,8 @@
  *
  * 两者都是 `position:absolute; z-index:-1`，所以**必须放在页面内容的最前面**。
  */
+import { mediaUrl } from '../lib/media';
+
 interface Props {
   /** background-position，用来把画面主体推到不挡正文的一侧 */
   position?: string;
@@ -17,17 +19,25 @@ interface Props {
    * `list` = 列表页（正文是卡片，底图可以多露一点）→ 换用 `--post-list-*` 令牌。
    */
   variant?: 'page' | 'list';
+  /** 本篇专属插画（frontmatter 的 bg）：覆盖主题令牌里的 --post-bg */
+  bg?: string;
+  /** 亮色插画档位（frontmatter 的 bgTone） */
+  tone?: 'auto' | 'bright';
 }
-const { position = '68% 30%', variant = 'page' } = Astro.props;
+const { position, variant = 'page', bg, tone = 'auto' } = Astro.props;
 const isList = variant === 'list';
+const isBright = tone === 'bright';
+/** 亮色插画多为对称构图（走廊之类），居中取景比偏移好看 */
+const pos = position ?? (isBright ? '50% 46%' : '68% 30%');
+const img = mediaUrl(bg);
 ---
 
 <div
-  class:list={['post-bg', { 'is-list': isList }]}
-  style={`--post-bg-pos:${position}`}
+  class:list={['post-bg', { 'is-list': isList, 'tone-bright': isBright }]}
+  style={`--post-bg-pos:${pos}${img ? `;--post-bg:url("${img}")` : ''}`}
   aria-hidden="true"
 ></div>
-<div class:list={['post-veil', { 'is-list': isList }]} aria-hidden="true"></div>
+<div class:list={['post-veil', { 'is-list': isList, 'tone-bright': isBright }]} aria-hidden="true"></div>
 
 <style>
   /* 文章很长，所以不做「固定铺满整屏」（读到下面还透图会伤可读性），
@@ -66,5 +76,18 @@ const isList = variant === 'list';
   }
   .post-veil.is-list {
     opacity: var(--post-list-veil-o, var(--post-veil-o, 0.9));
+  }
+  /* 亮色插画（整张发白）：夜主题下默认那层主题纱会把它糊成一团黑，
+     所以换一套更「多露图、少压纱」的令牌——文字仍是浅色，靠纱压住标题区即可。
+     同时把画面主体往下挪一点，别让最亮的部分正好顶在标题后面。 */
+  .post-bg.tone-bright {
+    opacity: var(--post-bright-img-o, 0.7);
+  }
+  .post-veil.tone-bright {
+    opacity: var(--post-bright-veil-o, 0.45);
+    /* 亮图的纱要压得更深一点：默认遮罩的实心区只到 15%，
+       而标题/日期正好落在 20% 上下，会被亮图顶掉对比度 */
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 72%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 72%);
   }
 </style>
