@@ -40,6 +40,10 @@
 - 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`，公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
   + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算 index（纯静态站「真的每天换」的解法）。
 - ⚠️ 网格一律 `minmax(min(100%, Npx), 1fr)`：少了 `min(100%,…)` 护栏，窄屏列宽会被 Npx 撑出横向滚动。
+- **文章页「语录」**（`PostQuotes.astro` + `consts.ts` 的 `POST_QUOTES[]`）与页脚「今日一句」（`QUOTES[]`）是**两套**，别混。
+  区块挂在 **正文/系列导航之后、投喂区之前**（全站文章页共用）。条目 `{text,date,image?,alt?}`，倒序＝新的在前；
+  日期**当年只写「X 月 X 日」、跨年才带年份**（手写 `iso.split('-')` 拆，别用 `new Date()` 免得时区挪一天）。
+- 落款日期：文章 markdown 里直接手写 `<p class="sign">…</p>`，样式在 PostLayout 用 **`.prose :global(.sign)`**（插槽内容不带 scope）。
 
 ## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`）
 - 双下巴修法：头切线落在 61.8~63% 平坦颈肉、羽化 1.4px、`transform-origin: 50% 62%` 压在切缝，竖直响应走 `scaleY`。
@@ -76,7 +80,10 @@
 - 图库 = `src/content/gallery/*.md`（`src/alt/date/group`；`GROUP_ORDER`：站点视觉 / 站点插画 / **文章封面** / 文章插画 / 友链）。
 - 用户给的图统一走 **`node scripts/optimize-media.cjs`**（`JOBS` 里登记 from/to/preset）：原图进 `raw-assets/` 留档、
   webp 进 `public/`，**打印平均亮度**提示要不要标 `bgTone: bright`（≥150 就该标）；顺手登记一条 gallery。
+  ⚠️ **视频截图自带黑边**（例：2400×1080 左右各 239px 纯黑）→ `JOBS` 里加 **`trim: 'auto'`** 先裁再压（也可写死 `[左,右,上,下]`）；
+  不裁的话图一进卡片/插画带就是两条黑杠。
   ⚠️ `raw-assets/` 在 .gitignore 里（只本地留档，CI 不需要）。
+- 文章页「语录」区块 = `consts.ts` 的 `POST_QUOTES[]` + `PostQuotes.astro`（与页脚「今日一句」的 `QUOTES[]` 是两套，别混）。
 
 ## 文章对外口径（用户明确要求）
 - 不写自己的真实所在地（具体省市一律写 `××省 ××市` 占位）。

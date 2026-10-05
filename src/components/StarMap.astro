@@ -1,5 +1,5 @@
 ---
-/** 星空猫座：每篇文章一颗星，按年份聚成星座，可拖拽缩放，点击跳转 */
+/** 星空猫座：每篇文章一颗星，按年份聚成星座；语录是独立的金色小星尘星座，可拖拽缩放，点击跳转 */
 export interface Star {
   id: string;
   title: string;
@@ -7,10 +7,17 @@ export interface Star {
   dateISO: string;
   url: string;
 }
+/** 语录星（title = 语录全文，点它跳语录分类） */
+export interface QuoteStar {
+  title: string;
+  dateISO: string;
+  url: string;
+}
 interface Props {
   stars: Star[];
+  quotes?: QuoteStar[];
 }
-const { stars } = Astro.props;
+const { stars, quotes = [] } = Astro.props;
 ---
 
 <div class="starmap" data-starmap>
@@ -19,7 +26,7 @@ const { stars } = Astro.props;
     <strong data-tip-title></strong>
     <time data-tip-date></time>
   </div>
-  <p class="hint">🖱 拖拽平移 · 滚轮缩放 · 点击星星跳转</p>
+  <p class="hint">🖱 拖拽平移 · 滚轮缩放 · 点击星星跳转（金星是语录）</p>
 </div>
 
 <style>
@@ -78,7 +85,7 @@ const { stars } = Astro.props;
   }
 </style>
 
-<script define:vars={{ stars }}>
+<script define:vars={{ stars, quotes }}>
   const wrap = document.querySelector('[data-starmap]');
   const canvas = wrap.querySelector('[data-canvas]');
   const tooltip = wrap.querySelector('[data-tooltip]');
@@ -110,7 +117,9 @@ const { stars } = Astro.props;
   }
 
   const years = [...new Set(stars.map((s) => s.year))].sort((a, b) => a - b);
-  const world = { w: Math.max(1100, years.length * 360), h: 520 };
+  const hasQuotes = quotes.length > 0;
+  const yearsW = Math.max(1100, years.length * 360);
+  const world = { w: yearsW + (hasQuotes ? 400 : 0), h: 520 };
   const nodes = [];
   const yearCenters = [];
 
@@ -136,6 +145,29 @@ const { stars } = Astro.props;
       });
     });
   });
+
+  /* ---- 语录星座：不挂在年份主链上，围绕自己的中心散开、不连线 ---- */
+  const quoteCenter = { x: 0, y: 0, r: 0 };
+  if (hasQuotes) {
+    quoteCenter.x = yearsW + 210;
+    quoteCenter.y = world.h / 2 - 150;
+    quoteCenter.r = Math.min(120, 62 + quotes.length * 13);
+    const rand = mulberry32(20250 + quotes.length * 31);
+    quotes.forEach((q) => {
+      const ang = rand() * Math.PI * 2;
+      const r = quoteCenter.r * (0.32 + 0.68 * rand());
+      nodes.push({
+        ...q,
+        year: null,
+        quote: true,
+        x: quoteCenter.x + Math.cos(ang) * r * 1.18,
+        y: quoteCenter.y + Math.sin(ang) * r * 0.85,
+        size: 1.9 + rand() * 1.1,
+        ph: rand() * Math.PI * 2,
+        tw: 0.5 + rand() * 1.2,
+      });
+    });
+  }
 
   /* ---- 视图变换 ---- */
   const view = { x: 0, y: 0, s: 1 };
@@ -172,7 +204,7 @@ const { stars } = Astro.props;
       ctx.stroke();
     }
 
-    // 星座内连线（按发文顺序）
+    // 星座内连线（按发文顺序；语录星 year 为 null，不会混进来）
     years.forEach((year) => {
       const ns = nodes.filter((n) => n.year === year);
       ctx.beginPath();
@@ -182,14 +214,38 @@ const { stars } = Astro.props;
       ctx.stroke();
     });
 
-    // 星星
+    // 语录星座：一圈虚线星云 + 中心一枚小菱形
+    if (hasQuotes) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([3, 5]);
+      ctx.arc(quoteCenter.x, quoteCenter.y, quoteCenter.r + 20, 0, Math.PI * 2);
+      ctx.strokeStyle = pal.gold;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.22;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.translate(quoteCenter.x, quoteCenter.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = pal.gold;
+      ctx.fillRect(-2.6, -2.6, 5.2, 5.2);
+      ctx.restore();
+    }
+
+    // 星星（文章 = 主题蓝，语录 = 金色小星）
     for (const n of nodes) {
       const alpha = reduced ? 0.9 : 0.55 + 0.45 * Math.sin(t * n.tw + n.ph);
       const gold = n === hover;
+      const isQ = !!n.quote;
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.size + (gold ? 1.5 : 0), 0, Math.PI * 2);
-      ctx.fillStyle = gold ? pal.gold : pal.star;
-      ctx.shadowColor = gold ? 'rgba(232,200,122,0.9)' : 'rgba(95,192,232,0.8)';
+      ctx.fillStyle = gold || isQ ? pal.gold : pal.star;
+      ctx.shadowColor = gold
+        ? 'rgba(232,200,122,0.9)'
+        : isQ
+          ? 'rgba(232,200,122,0.55)'
+          : 'rgba(95,192,232,0.8)';
       ctx.shadowBlur = 8 + (gold ? 8 : 0);
       ctx.globalAlpha = alpha;
       ctx.fill();
@@ -203,6 +259,12 @@ const { stars } = Astro.props;
     ctx.textAlign = 'center';
     for (const c of yearCenters) {
       ctx.fillText(`${c.year} · ${nodes.filter((n) => n.year === c.year).length} 篇`, c.x, c.y + 170);
+    }
+    // 语录标签（金色，跟星点同族）
+    if (hasQuotes) {
+      ctx.globalAlpha = 0.78;
+      ctx.fillText(`语录 · ${quotes.length} 句`, quoteCenter.x, quoteCenter.y + quoteCenter.r + 48);
+      ctx.globalAlpha = 1;
     }
     ctx.restore();
   }

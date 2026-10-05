@@ -3,11 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostBackdrop from '../../components/PostBackdrop.astro';
 import PostCard from '../../components/PostCard.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
+import QuoteCard from '../../components/QuoteCard.astro';
 import Playbill from '../../components/Playbill.astro';
 import Ornament from '../../components/Ornament.astro';
 import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
-import { PROJECTS } from '../../consts';
+import { PROJECTS, POST_QUOTES } from '../../consts';
 
 const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -31,7 +32,7 @@ for (const p of posts) {
     <Playbill
       kicker="ALL ARTICLES"
       title="全部剧目"
-      sub={`项目 ${projects.length} · 杂谈 ${posts.length}`}
+      sub={`项目 ${projects.length} · 杂谈 ${posts.length} · 语录 ${POST_QUOTES.length}`}
       motif="quill"
     />
 
@@ -47,6 +48,24 @@ for (const p of posts) {
           <div class="grid">
             {projects.map((p) => (
               <ProjectCard project={p} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      POST_QUOTES.length > 0 && (
+        <section class="board board--quotes" id="quotes">
+          <h2 class="board-title">
+            <Icon name="bubble" size={16} />
+            <span>语录</span>
+            <em>WHISPERS · {POST_QUOTES.length}</em>
+          </h2>
+          <p class="board-sub">路过的台词——一句话，一个日期，不连成剧。</p>
+          <div class="qgrid">
+            {POST_QUOTES.map((q) => (
+              <QuoteCard q={q} />
             ))}
           </div>
         </section>
@@ -177,5 +196,12 @@ for (const p of posts) {
   /* 项目通常只有几篇，卡片大一点更像作品墙 */
   .board--projects .grid {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  }
+  /* 语录是长条卡：宽屏两列并排，一句一条 */
+  .qgrid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
+    gap: 16px;
   }
 </style>

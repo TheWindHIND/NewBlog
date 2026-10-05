@@ -4,7 +4,6 @@ import SwordProgress from '../components/SwordProgress.astro';
 import FeedButton from '../components/FeedButton.astro';
 import CurtainOpen from '../components/CurtainOpen.astro';
 import PostBackdrop from '../components/PostBackdrop.astro';
-import PostQuotes from '../components/PostQuotes.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Heading {
@@ -104,9 +103,6 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
         </nav>
       )
     }
-
-    {/* 语录：全站文章页共用的卷末区块（数据在 consts.ts 的 POST_QUOTES） */}
-    <PostQuotes />
 
     <div class="feed-area">
       <FeedButton slug={post.id} />
@@ -270,28 +266,30 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 </style>
 
 <style>
-  /* ---------- 正文排版（prose） ---------- */
+  /* ---------- 正文排版（prose） ----------
+     ⚠️ Markdown 渲染出的元素**不带组件 scope 属性**，所以后代选择器必须包 :global()，
+     否则编译成 .prose[cid] p[cid] 永远不命中（段距/标题/引用/代码块会全部失效）。 */
   .prose {
     font-size: 1.02rem;
     min-width: 0;
   }
-  .prose h2 {
+  .prose :global(h2) {
     margin-top: 2.2em;
     padding-bottom: 6px;
     border-bottom: 1px dashed var(--border-strong);
   }
-  .prose h3 {
+  .prose :global(h3) {
     margin-top: 1.8em;
   }
-  .prose p {
+  .prose :global(p) {
     margin-block: 1em;
   }
-  .prose img {
+  .prose :global(img) {
     border-radius: var(--radius);
     margin-inline: auto;
     box-shadow: var(--shadow);
   }
-  .prose blockquote {
+  .prose :global(blockquote) {
     margin-block: 1.2em;
     padding: 10px 18px;
     border-left: 3px solid var(--accent);
@@ -299,7 +297,7 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
     border-radius: 0 var(--radius) var(--radius) 0;
     color: var(--text);
   }
-  .prose blockquote p {
+  .prose :global(blockquote p) {
     margin-block: 0.3em;
   }
   /* 落款（markdown 里手写 <p class="sign">）：右对齐、留白多一点 */
@@ -310,7 +308,7 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
     letter-spacing: 0.14em;
     color: var(--muted);
   }
-  .prose code:not(pre code) {
+  .prose :global(code:not(pre code)) {
     font-family: var(--font-mono);
     font-size: 0.88em;
     background: var(--accent-soft);
@@ -318,49 +316,49 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
     padding: 2px 7px;
     border-radius: 6px;
   }
-  .prose pre {
+  .prose :global(pre) {
     padding: 18px 20px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow-x: auto;
     font-size: 0.88rem;
   }
-  .prose pre code {
+  .prose :global(pre code) {
     font-family: var(--font-mono);
   }
   /* Shiki 双主题：荒主题用 dark 配色 */
-  :root[data-theme='ousia'] .prose .astro-code,
-  :root[data-theme='ousia'] .prose .astro-code span {
+  :root[data-theme='ousia'] .prose :global(.astro-code),
+  :root[data-theme='ousia'] .prose :global(.astro-code span) {
     color: var(--shiki-dark) !important;
     background-color: var(--shiki-dark-bg) !important;
     font-style: var(--shiki-dark-font-style) !important;
     font-weight: var(--shiki-dark-font-weight) !important;
   }
-  .prose ul,
-  .prose ol {
+  .prose :global(ul),
+  .prose :global(ol) {
     padding-left: 1.4em;
     margin-block: 0.8em;
   }
-  .prose li {
+  .prose :global(li) {
     margin-block: 0.3em;
   }
-  .prose hr {
+  .prose :global(hr) {
     border: none;
     border-top: 1px dashed var(--border-strong);
     margin-block: 2em;
   }
-  .prose table {
+  .prose :global(table) {
     width: 100%;
     border-collapse: collapse;
     margin-block: 1.2em;
     font-size: 0.92rem;
   }
-  .prose th,
-  .prose td {
+  .prose :global(th),
+  .prose :global(td) {
     border: 1px solid var(--border);
     padding: 8px 12px;
   }
-  .prose th {
+  .prose :global(th) {
     background: var(--accent-soft);
   }
 </style>

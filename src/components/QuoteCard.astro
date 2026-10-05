@@ -1,0 +1,114 @@
+---
+/**
+ * 语录长条卡（文章栏目「语录」分类用）
+ *  - 一句话 + 日期；可选配图（卡内左侧小图，撑满卡高）
+ *  - 语录没有详情页，卡片本身不做链接
+ *  - 日期显示：当年只写「X 月 X 日」，跨年才带年份
+ */
+import { mediaUrl } from '../lib/media';
+
+interface Quote {
+  text: string;
+  date: string;
+  image?: string;
+  alt?: string;
+}
+interface Props {
+  q: Quote;
+}
+const { q } = Astro.props;
+
+const thisYear = new Date().getFullYear();
+function formatDate(iso: string): string {
+  // 手动拆 ISO，避免 new Date() 的时区把日期挪一天
+  const [y, m, d] = iso.split('-').map(Number);
+  const md = `${m} 月 ${d} 日`;
+  return y === thisYear ? md : `${y} 年 ${md}`;
+}
+---
+
+<article class="qc">
+  {
+    q.image && (
+      <span class="qc-img">
+        <img src={mediaUrl(q.image)} alt={q.alt ?? ''} width="480" height="288" loading="lazy" />
+      </span>
+    )
+  }
+  <div class="qc-body">
+    <p class="qc-text">{q.text}</p>
+    <p class="qc-time">
+      <time datetime={q.date}>{formatDate(q.date)}</time>
+    </p>
+  </div>
+</article>
+
+<style>
+  .qc {
+    display: flex;
+    gap: 14px;
+    min-height: 104px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s var(--ease-water);
+  }
+  .qc:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+  /* 配图：卡内左侧小图，撑满卡高（卡 overflow hidden 收圆角） */
+  .qc-img {
+    flex: 0 0 116px;
+    align-self: stretch;
+    overflow: hidden;
+  }
+  .qc-img img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .qc-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 18px 12px;
+  }
+  .qc-text {
+    margin: 0;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+    font-size: 1rem;
+    line-height: 1.85;
+    color: var(--text);
+  }
+  .qc-time {
+    margin: auto 0 0;
+    padding-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .qc-time::before {
+    content: '';
+    flex: 0 0 26px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ornament));
+    opacity: 0.6;
+  }
+  @media (max-width: 560px) {
+    .qc-img {
+      flex-basis: 92px;
+    }
+    .qc-body {
+      padding: 12px 14px 10px;
+    }
+  }
+</style>

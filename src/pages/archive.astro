@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import StarMap from '../components/StarMap.astro';
 import Playbill from '../components/Playbill.astro';
 import { getCollection } from 'astro:content';
+import { POST_QUOTES } from '../consts';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
@@ -14,6 +15,13 @@ const stars = posts.map((p) => ({
   year: p.data.date.getFullYear(),
   dateISO: `${p.data.date.getFullYear()}-${String(p.data.date.getMonth() + 1).padStart(2, '0')}-${String(p.data.date.getDate()).padStart(2, '0')}`,
   url: `${B}/posts/${p.id}`,
+}));
+
+/* 语录星：title = 全文（悬停浮出），点它跳文章栏目的语录分类 */
+const quotes = POST_QUOTES.map((q) => ({
+  title: q.text,
+  dateISO: q.date,
+  url: `${B}/posts/#quotes`,
 }));
 
 const byYear = new Map<number, typeof posts>();
@@ -29,11 +37,11 @@ for (const p of posts) {
     <Playbill
       kicker="THE CONSTELLATION"
       title="星空猫座"
-      sub={`每篇文章都是一颗星，按年份连成星座。共 ${posts.length} 颗星在你头顶闪烁。`}
+      sub={`每篇文章都是一颗星，按年份连成星座；语录是散在一旁的金色小星尘。共 ${posts.length} 颗星 · ${quotes.length} 句语录在你头顶闪烁。`}
       motif="star"
     />
 
-    <StarMap stars={stars} />
+    <StarMap stars={stars} quotes={quotes} />
 
     <!-- 列表视图降级（无 JS / 低性能设备 / SEO） -->
     <details class="list-view">
@@ -55,6 +63,19 @@ for (const p of posts) {
           </section>
         ))
       }
+      <section>
+        <h2>语录</h2>
+        <ul>
+          {POST_QUOTES.map((q) => (
+            <li>
+              <a href={`${B}/posts/#quotes`}>
+                <span class="d">{q.date.slice(5).replace('-', '-')}</span>
+                {q.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
     </details>
   </section>
 </BaseLayout>
