@@ -4,6 +4,7 @@ import SwordProgress from '../components/SwordProgress.astro';
 import FeedButton from '../components/FeedButton.astro';
 import CurtainOpen from '../components/CurtainOpen.astro';
 import PostBackdrop from '../components/PostBackdrop.astro';
+import PostQuotes from '../components/PostQuotes.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Heading {
@@ -103,6 +104,9 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
         </nav>
       )
     }
+
+    {/* 语录：全站文章页共用的卷末区块（数据在 consts.ts 的 POST_QUOTES） */}
+    <PostQuotes />
 
     <div class="feed-area">
       <FeedButton slug={post.id} />
@@ -297,6 +301,14 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
   }
   .prose blockquote p {
     margin-block: 0.3em;
+  }
+  /* 落款（markdown 里手写 <p class="sign">）：右对齐、留白多一点 */
+  .prose :global(.sign) {
+    margin-top: 2em;
+    text-align: right;
+    font-size: 0.86rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
   }
   .prose code:not(pre code) {
     font-family: var(--font-mono);
