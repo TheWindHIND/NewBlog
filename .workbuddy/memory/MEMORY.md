@@ -14,14 +14,17 @@
   再抽查线上。⚠️ Pages 新文件有传播延迟：刚 success 时新 CSS 可能仍 404/旧内容，等几十秒重试。
 - ⚠️ **`npm run build` 前必须 `mv dist/.prerender <项目外的别处>`**：Astro 收尾删该临时目录，>100 文件会触发环境
   「批量删除防护」而失败；mv 改名不算删除。CI 无此问题。
+- ⚠️ push 被拒「remote contains work you do not have」：用户会往 main 打**空备份提交**（`backup:before …`）。
+  `fetch ssh://… main` 后 **`git rebase FETCH_HEAD`**（别 merge），再 push。
 - **截图 = Edge 无头**：`"/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu
   --no-sandbox --hide-scrollbars --force-device-scale-factor=2 --force-prefers-reduced-motion
   --run-all-compositor-stages-before-draw --window-size=1100,1250 --virtual-time-budget=25000
   --user-data-dir=<新目录> --screenshot=<绝对路径> <url>`（agent-browser 本机已废）
   - **必须 `--force-prefers-reduced-motion`**，否则截到过渡中间态（家具不可见/猫被放大）。
-  - ⚠️ **截图前确认渲染的是新构建**：本地预览服务会内存缓存旧产物（md5 可识破）。
-    改完源码：`npx astro preview stop` → `npx astro preview --port 4321 --force`。
-  - ⚠️ 预览只监听 IPv6：用 `http://[::1]:4321/NewBlog/…`，curl 要加 `--noproxy '*'`（否则被代理挡成 502）。
+  - ⚠️ 把 Edge 调用**包进 shell 函数/for 循环**时曾静默不产出（单独跑就正常）→ 每次截完 `ls -la` 校验，别 `>/dev/null` 蒙眼。
+  - ⚠️ `--window-size` < ~500px 时 Windows 按更宽视口排版只裁出这么宽 → **窄屏截图「溢出」是假象**，判真溢出看 CSS。
+  - ⚠️ 预览服务会内存缓存旧产物 → 改完源码 `npx astro preview stop` 再 `--port 4321 --force` 重启，否则截到旧画面。
+  - ⚠️ 预览只监听 IPv6：`http://[::1]:4321/NewBlog/…`，curl 加 `--noproxy '*'`（否则被代理挡成 502）。
 - **催熟 localStorage 页面**：构建后 `mkdir -p dist/__seed && cp raw-assets/ref/seed.html dist/__seed/index.html`，
   访问 `…/__seed/?t=ousia&v=40&to=room`（t=主题，v=回访数，to=落地页 posts/posts/<slug>/about/now…）。
   ⚠️ `catnest.theme` 存**裸字符串**（`'ousia'`/`'pneuma'`），其余 `visits/achievements/read/feed.*` 走 `JSON.stringify`。
@@ -35,31 +38,39 @@
 - ⚠️ **CSS 变量不跨兄弟节点**：给 `.post-bg`/`.post-veil` 这类兄弟元素配参数时，各自挂自己的变量。
 - 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`，公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
   + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算 index（纯静态站「真的每天换」的解法）。
+- ⚠️ 网格一律 `minmax(min(100%, Npx), 1fr)`：少了 `min(100%,…)` 护栏，窄屏列宽会被 Npx 撑出横向滚动。
 
 ## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`）
-- 双下巴修法：头切线挪到 61.8~63% 平坦颈肉（两侧进发丝）、羽化 1.4px、`transform-origin: 50% 62%` 压在切缝，
-  竖直响应用 **`scaleY` 点头**（`translate(cx*1.3%, cy*0.12%) rotate(cx*2.4deg) scaleY(1-cy*0.05)`）。
-- 尾巴修法：①`_probe-tail.cjs` 逐行量边界重写 `TAIL_POLY`（内缘绕开手指：y79~82% 手占 x68.2~76.2；外缘到 x≈91%）；
-  ②`TAIL_MARGIN=1.0` **绝不往根部扩**；③`growMaskIntoInk(mask,6)` 沿深色线稿生长吃描边（贴皮肤的深色不吃，保住手描边）；
-  ④`TAIL_PIVOT=(70.5,85.5)` 可见根部，CSS 同步；尾巴画在身体之上（z-index 2）。
-- ⚠️⚠️ **sharp 合成的 `dest-in`/`dest-out` 认遮罩 alpha，不认 RGB**。曾把遮罩写进 RGB、alpha 恒 255 →
+- 双下巴修法：头切线落在 61.8~63% 平坦颈肉、羽化 1.4px、`transform-origin: 50% 62%` 压在切缝，竖直响应走 `scaleY`。
+- 尾巴修法：`_probe-tail.cjs` 逐行量边界重写 `TAIL_POLY`（内缘绕开手指：y79~82% 手占 x68.2~76.2；外缘到 x≈91%）、
+  `TAIL_MARGIN=1.0` 绝不往根部扩、`growMaskIntoInk(mask,6)` 沿深色线稿生长吃描边（贴皮肤的深色不吃，保住手描边）、
+  `TAIL_PIVOT=(70.5,85.5)` 取可见根部；尾巴画在身体之上（z-index 2）。
+- ⚠️ ⚠️ **sharp 合成的 `dest-in`/`dest-out` 认遮罩 alpha，不认 RGB**。曾把遮罩写进 RGB、alpha 恒 255 →
   尾巴层吃到整只猫、头身层全空 → 页面「猫」整只跟着摆尾动画转（用户看到的是「先快晃几下再机械旋转」）。
   正解：**RGB 恒白、遮罩值写进 alpha**。`slice-cat.cjs` 已加交付前自检（读刚写的 webp 断言四层覆盖率，越界 exit 1）。
-- ⚠️ **改了切图脚本必须重跑 + 重新截图核对**（本轮事故＝验证过→又改脚本→没重验→坏图进仓库）。
-- 夹具 `_motion-fixture.cjs`：复制 `dist/room/index.html` → `dist/__motion/` 并注入脚本，按生产公式钉姿态
-  `?cx=&cy=&tail=`，**`?bg=magenta`** 藏布景刷品红（缺像素立刻漏底）。配 `_chk-tail-layers.cjs`、`_chk-alpha.cjs`（覆盖率速查）。
+- ⚠️ **改了切图脚本必须重跑 + 重新截图核对**（曾事故＝验证过→又改脚本→没重验→坏图进仓库）。
+- 夹具 `_motion-fixture.cjs` 把 `dist/room/index.html` 复制到 `dist/__motion/` 注入脚本，按生产公式钉姿态
+  `?cx=&cy=&tail=`，**`?bg=magenta`** 藏布景刷品红（缺像素立刻漏底）；配 `_chk-tail-layers.cjs`、`_chk-alpha.cjs`。
   ⚠️ 偶发整层空白 = `decoding="async"` 解码竞态，重跑即正常。
 
-## 背景插画（一张夜图两处用）
-- 关于页：`public/images/about/room-night.webp`；`.page-bg` 固定铺满 + `::after` 压主题色；
-  令牌 `--about-*-o`（夜 0.55/0.62/0.42，昼 0.4/0.87/0.16）。「枫」字 = `data-qq="2927015997"` 点击复制。
-- 文章页 + 列表页：共用 `src/components/PostBackdrop.astro`（`variant="list"` 换列表页令牌），
-  源图 → `public/images/post/swing-night.webp`（原图留档 `raw-assets/post/swing-src.jpg`）。
-  页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、`background-position:68% 30%`、`mask-image` 上淡入下淡出）
-  + `.post-veil`（纯 `var(--bg)` + mask 只压上缘）。
-  ⚠️ **别用「主题色→透明」渐变当纱**（sRGB 插值中段混灰）→ 一律 mask。
-  令牌：`--post-bg`、`--post-img-o`（夜 .5/昼 .34）、`--post-veil-o`（夜 .86/昼 .94）、
-  列表页 `--post-list-img-o`/`--post-list-veil-o`（夜 .66/.66，昼 .38/.9）。
+## 背景插画 / 内容扩展点（文章 · 图库 · 友链）
+- 关于页：`public/images/about/room-night.webp`；`.page-bg` 固定铺满 + `::after` 压主题色，令牌 `--about-*-o`
+  （夜 .55/.62/.42，昼 .4/.87/.16）。「枫」字 = `data-qq="2927015997"` 点击复制。
+- 文章页 + 列表页共用 `PostBackdrop.astro`（`variant="list"` 换列表页令牌，`bg`/`tone` 做单篇覆盖）：
+  页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、`bg-position:68% 30%`、mask 上淡入下淡出）+ `.post-veil`
+  （纯 `var(--bg)` + mask 只压上缘）。⚠️ **别用「主题色→透明」渐变当纱**（sRGB 中段混灰）→ 一律 mask。
+  令牌：`--post-img-o/--post-veil-o`（夜 .5/.86、昼 .34/.94）、列表 `--post-list-*`（夜 .66/.66、昼 .38/.9）。
+- 文章 frontmatter：`kind`（默认 `essay`＝杂谈按年份归档；`project`＝项目，列表页单独成组 + 卡片角标）、
+  `cover`（卡片顶部封面带）、`bg` + `bgTone`（本篇页首插画）、`series`/`seriesIndex`。列表页拆组在 `pages/posts/index.astro`。
+- 图片路径一律走 **`src/lib/media.ts` 的 `mediaUrl()`**：相对路径补 BASE_URL，`http(s)://`/`data:` 原样（可先用直链顶）。
+- ⚠️ **亮色插画（整张发白）必须标 `bgTone: bright`**：夜主题默认纱会把图糊没。bright 档换 `--post-bright-*`
+  （夜 .62/.58、昼 .5/.42）且纱的实心区从 15% 延到 **30%**（标题/日期正好落在 20% 上下，不然对比度被亮图顶掉）。
+- 友链 = `consts.ts` 的 `FRIENDS[]`（name/url/cover/avatar/desc）→ 关于页「**同台 · FELLOW ACTS**」区块。
+- 图库 = `src/content/gallery/*.md`（`src/alt/date/group`；组顺序看 `gallery.astro` 的 `GROUP_ORDER`：
+  站点视觉 / 站点插画 / 文章插画 / 友链）。
+- 用户给的图统一走 **`node scripts/optimize-media.cjs`**（在 `JOBS` 登记 from/to/preset）：原图进 `raw-assets/` 留档、
+  webp 进 `public/`，并**打印平均亮度**提示要不要标 `bgTone: bright`（≥150 就该标）。
+  ⚠️ `raw-assets/` 在 .gitignore 里（只本地留档，CI 不需要）。
 
 ## 包厢 / 字体 / 资产（细节见 handoff.md，只记易踩的）
 - ⚠️ 包厢墙面**避开猫位中带**（Live2DCat 浮层占 viewBox x296–504，纵向 y≈96–437）→ 只用 x<290 与 x>504。
@@ -70,6 +81,5 @@
 - 资产管线：`raw-assets/cat/aylen-full.png`（原画）→ `hat-ears-only.cjs` → `slice-cat.cjs` → `public/images/cat/*.webp`；
   `scripts/eyes-cat.cjs` **已废弃**，误跑会覆盖眼睛。图标 `key-ui.cjs`（绿幕抠）、徽记 `trace-emblem.cjs`。
 - 矢量道具：`sword-geom.mjs`（阅读进度剑）、`nail-geom.mjs`（寒天之钉）→ 颜色写成 `var(--x,回退)` 的**属性**（要过 `set:html`）。
-  ⚠️ 参考图→矢量工序：`probe-refs` 字符轮廓 → `crop-ref`/`grid-ref` 放大读坐标 → `mask-ref` 掩膜分离白色构件
-  （stride 按缓冲区长度反推通道数，别信 `metadata().channels`）→ 手写生成式 SVG → `render-*.cjs` 昼夜多尺寸对照
-  （SVG 已按目标尺寸渲染就**别再 resize**）。
+  ⚠️ 参考图→矢量工序：`probe-refs` → `crop-ref`/`grid-ref` 读坐标 → `mask-ref` 分离白色构件（stride 按缓冲区长度
+  反推通道数，别信 `metadata().channels`）→ 手写生成式 SVG → `render-*.cjs` 昼夜多尺寸对照（已按目标尺寸渲染就别再 resize）。
