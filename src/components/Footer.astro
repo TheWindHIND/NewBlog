@@ -49,7 +49,9 @@ const quote = QUOTES[daySeed % QUOTES.length];
     text-align: center;
   }
   .quote {
-    max-width: 560px;
+    /* 640 而不是 560：语录里有几条 30 字出头（最长 32 字），
+       560 会让「」的收尾单独掉到第二行，很难看 */
+    max-width: 640px;
     margin: 0 auto 30px;
     color: var(--text);
   }
