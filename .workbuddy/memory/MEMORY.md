@@ -34,15 +34,22 @@
 ## 前端踩坑
 - Astro **scoped 样式打不进 SVG `<use>` 影子内容**（不命中、无 scope 属性）→ 退回 `fill:black`（顶栏「一条黑线」）。
   复用 SVG 几何就渲染真实节点；非用 `<use>` 则把 fill/stroke 写在 `<use>` 上。`set:html` 注入的 SVG 同理 → 用 `var(--x,回退)`。
+- ⚠️ ⚠️ **Markdown 正文同样拿不到 scoped 样式**：`.prose p {…}` 编译成 `.prose[cid] p[cid]`，而 `<Content />` 渲染出的
+  元素**不带 cid** → 段距/标题/引用/代码块/表格样式**静默全失效**（曾让诗的分节消失、正文全无段距，很久没人发现）。
+  正文类后代选择器必须写 **`.prose :global(p)`**。手写在 `.astro` 模板里的 prose（如 about 页）带 cid，照旧写。
 - ⚠️ **`<img width height>` 是作者级 presentational hint**：只写 `width:100%` 覆盖不了高度 → 窄栏里图片纵向拉长。
   靠属性预留 CLS 的图，CSS 必须补 **`height:auto`**（要固定比例再加 `aspect-ratio`）。
 - ⚠️ **CSS 变量不跨兄弟节点**：给 `.post-bg`/`.post-veil` 这类兄弟元素配参数时，各自挂自己的变量。
 - 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`，公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
   + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算 index（纯静态站「真的每天换」的解法）。
 - ⚠️ 网格一律 `minmax(min(100%, Npx), 1fr)`：少了 `min(100%,…)` 护栏，窄屏列宽会被 Npx 撑出横向滚动。
-- **文章页「语录」**（`PostQuotes.astro` + `consts.ts` 的 `POST_QUOTES[]`）与页脚「今日一句」（`QUOTES[]`）是**两套**，别混。
-  区块挂在 **正文/系列导航之后、投喂区之前**（全站文章页共用）。条目 `{text,date,image?,alt?}`，倒序＝新的在前；
+- **「语录」= `/posts` 的第三块分类**（项目 / 语录 / 杂谈；`QuoteCard.astro` + `consts.ts` 的 `POST_QUOTES[]`，
+  与页脚「今日一句」的 `QUOTES[]` 是**两套**，别混）。条目 `{text,date,image?,alt?}`，倒序＝新的在前；
+  **长条卡**（宽屏两列 `minmax(min(100%,460px),1fr)`，配图缩成卡内左侧小图撑满卡高），板块带 `id="quotes"`。
+  ⚠️ 早期版本挂在**文章页页末**、文章页共用 → 语录一多每篇文章下面一长列，已撤（别再挂回去）。
   日期**当年只写「X 月 X 日」、跨年才带年份**（手写 `iso.split('-')` 拆，别用 `new Date()` 免得时区挪一天）。
+- **星空猫座的语录星座**（`StarMap.astro` 的 `quotes` 入参）：语录星 `year: null`（不会混进年份连线），
+  金色小星围绕**独立中心**散开、不连线，虚线圈 + 中心菱形 + 「语录 · N 句」标签；悬停浮出语录全文，点击跳 `/posts/#quotes`。
 - 落款日期：文章 markdown 里直接手写 `<p class="sign">…</p>`，样式在 PostLayout 用 **`.prose :global(.sign)`**（插槽内容不带 scope）。
 
 ## 伪 Live2D 分层（`Live2DCat.astro` + `scripts/slice-cat.cjs`）
@@ -83,7 +90,7 @@
   ⚠️ **视频截图自带黑边**（例：2400×1080 左右各 239px 纯黑）→ `JOBS` 里加 **`trim: 'auto'`** 先裁再压（也可写死 `[左,右,上,下]`）；
   不裁的话图一进卡片/插画带就是两条黑杠。
   ⚠️ `raw-assets/` 在 .gitignore 里（只本地留档，CI 不需要）。
-- 文章页「语录」区块 = `consts.ts` 的 `POST_QUOTES[]` + `PostQuotes.astro`（与页脚「今日一句」的 `QUOTES[]` 是两套，别混）。
+- 语录 = `consts.ts` 的 `POST_QUOTES[]` + `QuoteCard.astro`（挂在 `/posts` 的「语录」分类，不在文章页；见「前端踩坑」）。
 
 ## 文章对外口径（用户明确要求）
 - 不写自己的真实所在地（具体省市一律写 `××省 ××市` 占位）。
