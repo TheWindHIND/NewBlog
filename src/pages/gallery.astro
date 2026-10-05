@@ -14,7 +14,7 @@ const items = (await getCollection('gallery')).sort(
   (a, b) => (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0)
 );
 /** 展厅顺序固定下来，免得加一张图就打乱原来的排布 */
-const GROUP_ORDER = ['站点视觉', '站点插画', '文章插画', '友链'];
+const GROUP_ORDER = ['站点视觉', '站点插画', '文章封面', '文章插画', '友链'];
 const groups = [...new Set(items.map((i) => i.data.group))].sort((a, b) => {
   const ia = GROUP_ORDER.indexOf(a);
   const ib = GROUP_ORDER.indexOf(b);

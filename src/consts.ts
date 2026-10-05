@@ -23,6 +23,22 @@ export const FRIENDS = [
   },
 ];
 
+/**
+ * 项目作品墙（文章页「项目」分组）
+ *  - 卡片整块点击 = 打开项目本身的站点（新窗口）
+ *  - tags / cover 都可留空；cover 支持站内相对路径或外链直链
+ *  - note：站内那篇「过程笔记」的 slug（写了就在卡片下方多一个站内入口）
+ */
+export const PROJECTS = [
+  {
+    name: '我马上来',
+    url: 'https://thewindhind.github.io/im-coming/',
+    desc: '一个单文件纯静态页面：打开链接的第一秒，它就说出了你在哪个省、哪个市。',
+    tags: ['原生 JS', '单文件', '定位'],
+    note: 'im-coming',
+  },
+];
+
 /** 芙宁娜语录（每日轮换） */
 export const QUOTES: string[] = [
   '「这样的荣耀，非我莫属！」',

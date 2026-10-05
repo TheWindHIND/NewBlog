@@ -22,6 +22,7 @@
   --user-data-dir=<新目录> --screenshot=<绝对路径> <url>`（agent-browser 本机已废）
   - **必须 `--force-prefers-reduced-motion`**，否则截到过渡中间态（家具不可见/猫被放大）。
   - ⚠️ 把 Edge 调用**包进 shell 函数/for 循环**时曾静默不产出（单独跑就正常）→ 每次截完 `ls -la` 校验，别 `>/dev/null` 蒙眼。
+  - ⚠️ `--user-data-dir` 写成 **`C:/tmp/edge-xxx`**（盘符路径）。写 `/tmp/edge-xxx` 时曾整批静默不产出。每次换新目录名。
   - ⚠️ `--window-size` < ~500px 时 Windows 按更宽视口排版只裁出这么宽 → **窄屏截图「溢出」是假象**，判真溢出看 CSS。
   - ⚠️ 预览服务会内存缓存旧产物 → 改完源码 `npx astro preview stop` 再 `--port 4321 --force` 重启，否则截到旧画面。
   - ⚠️ 预览只监听 IPv6：`http://[::1]:4321/NewBlog/…`，curl 加 `--noproxy '*'`（否则被代理挡成 502）。
@@ -60,17 +61,27 @@
   页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、`bg-position:68% 30%`、mask 上淡入下淡出）+ `.post-veil`
   （纯 `var(--bg)` + mask 只压上缘）。⚠️ **别用「主题色→透明」渐变当纱**（sRGB 中段混灰）→ 一律 mask。
   令牌：`--post-img-o/--post-veil-o`（夜 .5/.86、昼 .34/.94）、列表 `--post-list-*`（夜 .66/.66、昼 .38/.9）。
-- 文章 frontmatter：`kind`（默认 `essay`＝杂谈按年份归档；`project`＝项目，列表页单独成组 + 卡片角标）、
-  `cover`（卡片顶部封面带）、`bg` + `bgTone`（本篇页首插画）、`series`/`seriesIndex`。列表页拆组在 `pages/posts/index.astro`。
+- 文章 frontmatter：`cover`（卡片封面带）、`bg` + `bgTone`（本篇页首插画）、`series`/`seriesIndex`。
+  ⚠️ **已删掉 `kind`**（项目不再由文章承担，别再加回来）。
+- **「项目」= 作品墙，不是文章**：`consts.ts` 的 `PROJECTS[]`（name/url/desc/tags/cover/note）→ `ProjectCard.astro`
+  渲染，整块卡片**外链**项目站点；`note` = 站内那篇「过程笔记」的 slug，卡片下方再给一个站内入口。
+  写法的来龙去脉一律当**普通文章**收进「杂谈」按年份归档。
 - 图片路径一律走 **`src/lib/media.ts` 的 `mediaUrl()`**：相对路径补 BASE_URL，`http(s)://`/`data:` 原样（可先用直链顶）。
 - ⚠️ **亮色插画（整张发白）必须标 `bgTone: bright`**：夜主题默认纱会把图糊没。bright 档换 `--post-bright-*`
-  （夜 .62/.58、昼 .5/.42）且纱的实心区从 15% 延到 **30%**（标题/日期正好落在 20% 上下，不然对比度被亮图顶掉）。
+  （夜 .62/.58、昼 .5/.42），且纱的实心区从 15% 延到 **30%**（标题/日期落在 20% 上下，不然对比度被亮图顶掉）。
+- ⚠️ 列表页页首的「裸文字」（`.board-title`/`.board-sub`/`.year`）是**压在插画带**上的：要给同底色柔光字影
+  `text-shadow: 0 1px 12px var(--bg), 0 1px 2px var(--bg)`（可继承）；`.board-sub` 还要用 `var(--text)` + `opacity:.72`，
+  用 `--muted` 会在插画最亮的墙面上糊掉。
 - 友链 = `consts.ts` 的 `FRIENDS[]`（name/url/cover/avatar/desc）→ 关于页「**同台 · FELLOW ACTS**」区块。
-- 图库 = `src/content/gallery/*.md`（`src/alt/date/group`；组顺序看 `gallery.astro` 的 `GROUP_ORDER`：
-  站点视觉 / 站点插画 / 文章插画 / 友链）。
-- 用户给的图统一走 **`node scripts/optimize-media.cjs`**（在 `JOBS` 登记 from/to/preset）：原图进 `raw-assets/` 留档、
-  webp 进 `public/`，并**打印平均亮度**提示要不要标 `bgTone: bright`（≥150 就该标）。
+- 图库 = `src/content/gallery/*.md`（`src/alt/date/group`；`GROUP_ORDER`：站点视觉 / 站点插画 / **文章封面** / 文章插画 / 友链）。
+- 用户给的图统一走 **`node scripts/optimize-media.cjs`**（`JOBS` 里登记 from/to/preset）：原图进 `raw-assets/` 留档、
+  webp 进 `public/`，**打印平均亮度**提示要不要标 `bgTone: bright`（≥150 就该标）；顺手登记一条 gallery。
   ⚠️ `raw-assets/` 在 .gitignore 里（只本地留档，CI 不需要）。
+
+## 文章对外口径（用户明确要求）
+- 不写自己的真实所在地（具体省市一律写 `××省 ××市` 占位）。
+- 不写「彩蛋 / 恶作剧」这类隐藏机制。
+- 不写密钥处理细节（原文那段 Base64 是**真 key 碎片**，绝不能进仓库）。
 
 ## 包厢 / 字体 / 资产（细节见 handoff.md，只记易踩的）
 - ⚠️ 包厢墙面**避开猫位中带**（Live2DCat 浮层占 viewBox x296–504，纵向 y≈96–437）→ 只用 x<290 与 x>504。

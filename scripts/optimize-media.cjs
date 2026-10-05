@@ -27,6 +27,7 @@ const PRESETS = {
 
 /** 登记表：{ from: raw-assets 下的原图, to: public 下的 webp, preset } */
 const JOBS = [
+  { from: 'post/grand-opening-src.jpg', to: 'images/post/grand-opening.webp', preset: 'card' },
   { from: 'post/white-src.png', to: 'images/post/white-dream.webp', preset: 'post' },
   { from: 'links/lqy-site.jpg', to: 'images/links/lqy-site.webp', preset: 'card' },
   { from: 'links/lqy-avatar.jpg', to: 'images/links/lqy-avatar.webp', preset: 'avatar' },

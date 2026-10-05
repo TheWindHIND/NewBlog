@@ -20,7 +20,6 @@ const cover = mediaUrl(d.cover);
       <time datetime={d.date.toISOString()}>
         {d.date.getFullYear()} 年 {d.date.getMonth() + 1} 月 {d.date.getDate()} 日
       </time>
-      {d.kind === 'project' && <span class="kind">项目</span>}
       {d.series && <span class="series">{d.series}</span>}
     </div>
     <h3>{d.title}</h3>
@@ -76,14 +75,6 @@ const cover = mediaUrl(d.cover);
     background: var(--accent-2-soft);
     padding: 1px 9px;
     border-radius: 999px;
-  }
-  .kind {
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    padding: 0 9px;
-    border-radius: 999px;
-    letter-spacing: 0.1em;
   }
   /* 封面带：铺满卡片顶部，用遮罩把下缘淡出 —— 遮罩只改 alpha，
      所以不管卡片底色是昼是夜都能自然融进去，不留一条硬缝。 */

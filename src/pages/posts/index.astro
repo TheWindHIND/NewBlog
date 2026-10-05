@@ -2,21 +2,22 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostBackdrop from '../../components/PostBackdrop.astro';
 import PostCard from '../../components/PostCard.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
 import Playbill from '../../components/Playbill.astro';
 import Ornament from '../../components/Ornament.astro';
 import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
+import { PROJECTS } from '../../consts';
 
 const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
-/** 项目：独立成组排在最前，其余的杂谈仍按年份分幕 */
-const projects = posts.filter((p) => p.data.kind === 'project');
-const essays = posts.filter((p) => p.data.kind !== 'project');
+/** 项目门口放着的是「作品」本身（点开即去对方站点），它们的写法/来龙去脉则作为文章收在下面按年份归档 */
+const projects = PROJECTS;
 
 const byYear = new Map<number, typeof posts>();
-for (const p of essays) {
+for (const p of posts) {
   const y = p.data.date.getFullYear();
   if (!byYear.has(y)) byYear.set(y, []);
   byYear.get(y)!.push(p);
@@ -30,7 +31,7 @@ for (const p of essays) {
     <Playbill
       kicker="ALL ARTICLES"
       title="全部剧目"
-      sub={`共 ${posts.length} 篇 · 项目 ${projects.length} · 杂谈 ${essays.length}`}
+      sub={`项目 ${projects.length} · 杂谈 ${posts.length}`}
       motif="quill"
     />
 
@@ -42,10 +43,10 @@ for (const p of essays) {
             <span>项目</span>
             <em>PROJECTS · {projects.length}</em>
           </h2>
-          <p class="board-sub">自己搭的东西——做完了、能访问，顺手把过程写下来。</p>
+          <p class="board-sub">自己搭的东西——做完了、能访问。点开就是它本身；怎么做的，写在下面的杂谈里。</p>
           <div class="grid">
-            {projects.map((post) => (
-              <PostCard post={post} />
+            {projects.map((p) => (
+              <ProjectCard project={p} />
             ))}
           </div>
         </section>
@@ -53,12 +54,12 @@ for (const p of essays) {
     }
 
     {
-      essays.length > 0 && (
+      posts.length > 0 && (
         <section class="board">
           <h2 class="board-title">
             <Icon name="quill" size={16} />
             <span>杂谈</span>
-            <em>ESSAYS · {essays.length}</em>
+            <em>ESSAYS · {posts.length}</em>
           </h2>
           {[...byYear.entries()].map(([year, list]) => (
             <section class="year-group">
@@ -118,7 +119,17 @@ for (const p of essays) {
   .board-sub {
     margin-top: 8px;
     font-size: 0.86rem;
-    color: var(--muted);
+    /* 这条是压在插画最亮的地方（墙面）上的，用 --muted 会糊掉，
+       所以走正文字色 + 一点透明度，配下面的字影 */
+    color: var(--text);
+    opacity: 0.72;
+  }
+  /* 页首这块文字是直接压在插画带上的，给一层同底色柔光字影才读得清
+     （text-shadow 会继承，所以 em 之类的子元素也一起有） */
+  .board-title,
+  .board-sub,
+  .year {
+    text-shadow: 0 1px 12px var(--bg), 0 1px 2px var(--bg);
   }
   .year-group {
     margin-top: 30px;

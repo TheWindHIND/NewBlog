@@ -2,6 +2,7 @@
 title: 猫窝开张啦
 description: 一则简短的公告：藏枫的猫窝正式上线。
 date: 2026-10-02
+cover: images/post/grand-opening.webp
 tags:
   - 公告
 ---

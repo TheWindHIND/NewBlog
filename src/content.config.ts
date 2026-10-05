@@ -11,8 +11,6 @@ const posts = defineCollection({
     series: z.string().optional(),
     seriesIndex: z.number().optional(),
     draft: z.boolean().default(false),
-    /** 分组：essay = 杂谈（默认，按年份归档），project = 项目（列表页单独成组） */
-    kind: z.enum(['essay', 'project']).default('essay'),
     /** 卡片封面小图（本地路径或外链直链都可；留空则卡片不带封面） */
     cover: z.string().optional(),
     /** 本篇专属的页首插画带（覆盖主题令牌里的 --post-bg） */
