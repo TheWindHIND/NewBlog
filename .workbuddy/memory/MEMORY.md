@@ -40,14 +40,17 @@
 - ⚠️ **`<img width height>` 是作者级 presentational hint**：只写 `width:100%` 覆盖不了高度 → 窄栏里图片纵向拉长。
   靠属性预留 CLS 的图，CSS 必须补 **`height:auto`**（要固定比例再加 `aspect-ratio`）。
 - ⚠️ **CSS 变量不跨兄弟节点**：给 `.post-bg`/`.post-veil` 这类兄弟元素配参数时，各自挂自己的变量。
-- 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`，公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
+- 「今日一句」：语录 `consts.ts` 的 `QUOTES[]`（**池长 = 轮换周期**，10 句 = 10 天一轮，取模天然循环、不会用尽），
+  公式 `YYYY*372+(M+1)*31+D` 取模。构建时渲染一条（无 JS 兜底）
   + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算 index（纯静态站「真的每天换」的解法）。
+  ⚠️ 该公式相邻两天恒定差 1（含月末/年末进位），所以是**按池内顺序一天一句地循环**，不跳句也不会连着两天重复。
 - ⚠️ 网格一律 `minmax(min(100%, Npx), 1fr)`：少了 `min(100%,…)` 护栏，窄屏列宽会被 Npx 撑出横向滚动。
-- **「语录」= `/posts` 的第三块分类**（项目 / 语录 / 杂谈；`QuoteCard.astro` + `consts.ts` 的 `POST_QUOTES[]`，
+- **「语录」= `/posts` 的第三块分类**（顺序 **项目 / 杂谈 / 语录**，语录垫底；`QuoteCard.astro` + `consts.ts` 的 `POST_QUOTES[]`，
   与页脚「今日一句」的 `QUOTES[]` 是**两套**，别混）。条目 `{text,date,image?,alt?}`，倒序＝新的在前；
   **长条卡**（宽屏两列 `minmax(min(100%,460px),1fr)`，配图缩成卡内左侧小图撑满卡高），板块带 `id="quotes"`。
   ⚠️ 早期版本挂在**文章页页末**、文章页共用 → 语录一多每篇文章下面一长列，已撤（别再挂回去）。
-  日期**当年只写「X 月 X 日」、跨年才带年份**（手写 `iso.split('-')` 拆，别用 `new Date()` 免得时区挪一天）。
+  日期**当年只写「X 月 X 日」、跨年才带年份**（手写 `iso.split('-')` 拆，别用 `new Date()` 免得时区挪一天）——
+  即日期显示跟**构建年**走，明年重建时「2026-08-04」会自动变成「2026 年 8 月 4 日」，这是有意为之不是 bug。
 - **星空猫座的语录星座**（`StarMap.astro` 的 `quotes` 入参）：语录星 `year: null`（不会混进年份连线），
   金色小星围绕**独立中心**散开、不连线，虚线圈 + 中心菱形 + 「语录 · N 句」标签；悬停浮出语录全文，点击跳 `/posts/#quotes`。
 - 落款日期：文章 markdown 里直接手写 `<p class="sign">…</p>`，样式在 PostLayout 用 **`.prose :global(.sign)`**（插槽内容不带 scope）。
@@ -68,6 +71,10 @@
 ## 背景插画 / 内容扩展点（文章 · 图库 · 友链）
 - 关于页：`public/images/about/room-night.webp`；`.page-bg` 固定铺满 + `::after` 压主题色，令牌 `--about-*-o`
   （夜 .55/.62/.42，昼 .4/.87/.16）。「枫」字 = `data-qq="2927015997"` 点击复制。
+- 归档页（`/archive`）整页背景：同一套 `.page-bg` 写法，令牌 `--archive-bg/--archive-bg-pos/--archive-img-o/--archive-veil-o`。
+  ⚠️ **全站唯一昼夜挂两张不同图**的地方（荒=夜城 `.85/.3`、芒=午后阳台 `1/.15`）——暗图配暗主题能露，亮图配浅底纱必须薄。
+  ⚠️ `position:fixed` 的背景在**整页截图里只出现在视口那一屏**，下面「没图」是截图假象，不是 bug。
+  星图面板 `.starmap` 用**半透明卡面**（`--bg-card` + 顶部 `--accent-soft` 径向光），底图透一点出来才像「悬在景里」。
 - 文章页 + 列表页共用 `PostBackdrop.astro`（`variant="list"` 换列表页令牌，`bg`/`tone` 做单篇覆盖）：
   页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、`bg-position:68% 30%`、mask 上淡入下淡出）+ `.post-veil`
   （纯 `var(--bg)` + mask 只压上缘）。⚠️ **别用「主题色→透明」渐变当纱**（sRGB 中段混灰）→ 一律 mask。

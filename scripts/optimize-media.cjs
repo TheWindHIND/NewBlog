@@ -31,6 +31,9 @@ const JOBS = [
   { from: 'post/white-src.png', to: 'images/post/white-dream.webp', preset: 'post' },
   // 视频截图常带黑边（这张左右各 239px）——trim: 'auto' 自动裁掉
   { from: 'quotes/emergence-src.jpg', to: 'images/quotes/emergence.webp', preset: 'post', trim: 'auto' },
+  // 归档页（星空猫座）整页背景：荒 = 夜城，芒 = 午后阳台
+  { from: 'archive/ousia-night-src.jpg', to: 'images/archive/ousia-night.webp', preset: 'post' },
+  { from: 'archive/pneuma-day-src.jpg', to: 'images/archive/pneuma-day.webp', preset: 'post' },
   { from: 'links/lqy-site.jpg', to: 'images/links/lqy-site.webp', preset: 'card' },
   { from: 'links/lqy-avatar.jpg', to: 'images/links/lqy-avatar.webp', preset: 'avatar' },
 ];

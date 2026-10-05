@@ -55,24 +55,6 @@ for (const p of posts) {
     }
 
     {
-      POST_QUOTES.length > 0 && (
-        <section class="board board--quotes" id="quotes">
-          <h2 class="board-title">
-            <Icon name="bubble" size={16} />
-            <span>语录</span>
-            <em>WHISPERS · {POST_QUOTES.length}</em>
-          </h2>
-          <p class="board-sub">路过的台词——一句话，一个日期，不连成剧。</p>
-          <div class="qgrid">
-            {POST_QUOTES.map((q) => (
-              <QuoteCard q={q} />
-            ))}
-          </div>
-        </section>
-      )
-    }
-
-    {
       posts.length > 0 && (
         <section class="board">
           <h2 class="board-title">
@@ -94,6 +76,25 @@ for (const p of posts) {
               </div>
             </section>
           ))}
+        </section>
+      )
+    }
+
+    {/* 语录垫在最后：条目最碎、最短，放在归档后面不打断「项目 → 杂谈」的主线 */}
+    {
+      POST_QUOTES.length > 0 && (
+        <section class="board board--quotes" id="quotes">
+          <h2 class="board-title">
+            <Icon name="bubble" size={16} />
+            <span>语录</span>
+            <em>WHISPERS · {POST_QUOTES.length}</em>
+          </h2>
+          <p class="board-sub">路过的台词——一句话，一个日期，不连成剧。</p>
+          <div class="qgrid">
+            {POST_QUOTES.map((q) => (
+              <QuoteCard q={q} />
+            ))}
+          </div>
         </section>
       )
     }

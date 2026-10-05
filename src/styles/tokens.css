@@ -105,6 +105,12 @@
   --post-bright-img-o: 0.62;
   --post-bright-veil-o: 0.58;
 
+  /* 归档页（星空猫座）整页背景：夜城（本身就是暗图，露得多也不刺眼） */
+  --archive-bg: url("/NewBlog/images/archive/ousia-night.webp");
+  --archive-bg-pos: 62% 30%;
+  --archive-img-o: 0.85;
+  --archive-veil-o: 0.3;
+
   /* 夜场天鹅绒幕布（深海绸缎） */
   --curtain-a: #0d1a30;
   --curtain-b: #1b3055;
@@ -203,6 +209,12 @@
   /* 亮色插画：昼场本来就是浅底，图可以露得足，纱只压标题区 */
   --post-bright-img-o: 0.5;
   --post-bright-veil-o: 0.42;
+
+  /* 归档页整页背景：午后阳台（暖亮图压在香槟底上，纱加厚一点免得糊成灰） */
+  --archive-bg: url("/NewBlog/images/archive/pneuma-day.webp");
+  --archive-bg-pos: 56% 38%;
+  --archive-img-o: 1;
+  --archive-veil-o: 0.15;
 
   /* 昼场幕布（香槟金绸缎） */
   --curtain-a: #f3e6c6;

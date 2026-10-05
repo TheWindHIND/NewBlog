@@ -33,6 +33,9 @@ for (const p of posts) {
 ---
 
 <BaseLayout title="星空猫座" description="全部文章的星图归档——每篇文章都是一颗星。">
+  {/* 整页背景（固定铺满）：荒 = 夜城，芒 = 午后阳台。两张图按主题各挂一套，令牌见 tokens.css */}
+  <div class="page-bg" aria-hidden="true"></div>
+
   <section class="container">
     <Playbill
       kicker="THE CONSTELLATION"
@@ -81,8 +84,36 @@ for (const p of posts) {
 </BaseLayout>
 
 <style>
+  /* 整页背景：与关于页同一套写法（fixed 铺满 + ::after 压一层主题色）。
+     图本身按主题换（荒=夜城 / 芒=午后阳台），透明度走 --archive-* 令牌。 */
+  .page-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--archive-bg);
+    background-size: cover;
+    background-position: var(--archive-bg-pos, 50% 30%);
+    background-repeat: no-repeat;
+    opacity: var(--archive-img-o, 0.6);
+    pointer-events: none;
+  }
+  .page-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    opacity: var(--archive-veil-o, 0.5);
+  }
+
   .container {
     padding-block: 40px 20px;
+  }
+  /* 列表视图是裸文字，直接压在插画上 → 同底色柔光字影（与文章列表页同规则） */
+  .list-view summary,
+  .list-view h2,
+  .list-view a,
+  .list-view .d {
+    text-shadow: 0 1px 12px var(--bg), 0 1px 2px var(--bg);
   }
   .list-view {
     margin-top: 24px;

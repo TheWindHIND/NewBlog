@@ -34,7 +34,11 @@ const { stars, quotes = [] } = Astro.props;
     position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: var(--bg-soft);
+    /* 半透明卡面：让页面的整页背景（夜城/午后阳台）从星图底下透一点出来，
+       星图才像「悬在景里」，而不是一块贴上去的板子 */
+    background:
+      radial-gradient(ellipse 80% 120% at 50% 0%, var(--accent-soft), transparent 70%),
+      var(--bg-card);
     overflow: hidden;
   }
   canvas {
