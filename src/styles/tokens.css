@@ -104,6 +104,10 @@
      —— 标题区仍被纱盖住，浅色字照样读得清 */
   --post-bright-img-o: 0.62;
   --post-bright-veil-o: 0.58;
+  /* 暗色插画（整张很暗的图）：默认纱层下只剩一层黑，也得少压纱 —— 图本身够暗，
+     浅色字压在上面照样读得清 */
+  --post-dark-img-o: 0.82;
+  --post-dark-veil-o: 0.46;
 
   /* 归档页（星空猫座）整页背景：夜城（本身就是暗图，露得多也不刺眼） */
   --archive-bg: url("/NewBlog/images/archive/ousia-night.webp");
@@ -209,6 +213,9 @@
   /* 亮色插画：昼场本来就是浅底，图可以露得足，纱只压标题区 */
   --post-bright-img-o: 0.5;
   --post-bright-veil-o: 0.42;
+  /* 暗色插画：昼场挂暗图要当心「糊成灰」，纱比夜场厚一点、图少露一点 */
+  --post-dark-img-o: 0.72;
+  --post-dark-veil-o: 0.52;
 
   /* 归档页整页背景：午后阳台（暖亮图压在香槟底上，纱加厚一点免得糊成灰） */
   --archive-bg: url("/NewBlog/images/archive/pneuma-day.webp");

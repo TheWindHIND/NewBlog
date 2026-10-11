@@ -15,7 +15,8 @@ const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD 
 );
 
 /** 项目门口放着的是「作品」本身（点开即去对方站点），它们的写法/来龙去脉则作为文章收在下面按年份归档 */
-const projects = PROJECTS;
+/** draft 的项目先压住（大多是「过程笔记还是草稿」——卡片没处可跳，见 consts.ts 的注释） */
+const projects = import.meta.env.PROD ? PROJECTS.filter((p) => !p.draft) : PROJECTS;
 
 const byYear = new Map<number, typeof posts>();
 for (const p of posts) {
@@ -44,7 +45,7 @@ for (const p of posts) {
             <span>项目</span>
             <em>PROJECTS · {projects.length}</em>
           </h2>
-          <p class="board-sub">自己搭的东西——做完了、能访问。点开就是它本身；怎么做的，写在下面的杂谈里。</p>
+          <p class="board-sub">自己搭的东西——做完的点开就是它本身，还在做的先说怎么做。</p>
           <div class="grid">
             {projects.map((p) => (
               <ProjectCard project={p} />

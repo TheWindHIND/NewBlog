@@ -25,7 +25,7 @@ const PRESETS = {
   avatar: { width: 320, quality: 82 }, // 头像
 };
 
-/** 登记表：{ from: raw-assets 下的原图, to: public 下的 webp, preset, trim? } */
+/** 登记表：{ from: raw-assets 下的原图, to: public 下的 webp, preset, trim?, quality? } */
 const JOBS = [
   { from: 'post/grand-opening-src.jpg', to: 'images/post/grand-opening.webp', preset: 'card' },
   { from: 'post/white-src.png', to: 'images/post/white-dream.webp', preset: 'post' },
@@ -34,6 +34,10 @@ const JOBS = [
   // 归档页（星空猫座）整页背景：荒 = 夜城，芒 = 午后阳台
   { from: 'archive/ousia-night-src.jpg', to: 'images/archive/ousia-night.webp', preset: 'post' },
   { from: 'archive/pneuma-day-src.jpg', to: 'images/archive/pneuma-day.webp', preset: 'post' },
+  // 《电子皮肤》项目：荒（夜）/ 芒（昼）两张配对插画，夜那张同时当卡片封面
+  // （雨丝 + 粒子噪点密，quality 压低一档，尺寸减半而肉眼看不出）
+  { from: 'post/e-skin-night-src.jpg', to: 'images/post/e-skin-night.webp', preset: 'post', quality: 68 },
+  { from: 'post/e-skin-day-src.jpg', to: 'images/post/e-skin-day.webp', preset: 'post', quality: 68 },
   { from: 'links/lqy-site.jpg', to: 'images/links/lqy-site.webp', preset: 'card' },
   { from: 'links/lqy-avatar.jpg', to: 'images/links/lqy-avatar.webp', preset: 'avatar' },
 ];
@@ -104,7 +108,8 @@ async function detectBars(src) {
     if (geo) pipe = pipe.extract(geo);
     const shrink = geo ? geo.width > p.width : ow > p.width;
     if (shrink) pipe = pipe.resize({ width: p.width, withoutEnlargement: true });
-    await pipe.webp({ quality: p.quality, effort: 6 }).toFile(dest);
+    // quality 可按图覆盖：噪点重的插画（雨丝、粒子）用预设质量会偏大
+    await pipe.webp({ quality: job.quality ?? p.quality, effort: 6 }).toFile(dest);
     const { size } = fs.statSync(dest);
 
     // 平均亮度：用来判断这张图该不该在 frontmatter 里标 bgTone: bright

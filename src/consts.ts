@@ -25,11 +25,23 @@ export const FRIENDS = [
 
 /**
  * 项目作品墙（文章页「项目」分组）
- *  - 卡片整块点击 = 打开项目本身的站点（新窗口）
+ *  - 有 url：卡片整块点击 = 打开项目本身的站点（新窗口），meta 显示域名 + ↗
+ *  - 没 url：整块点击 = 跳站内那篇「过程笔记」（同窗口），meta 换成 status（如「原型 · 制作中」）
  *  - tags / cover 都可留空；cover 支持站内相对路径或外链直链
  *  - note：站内那篇「过程笔记」的 slug（写了就在卡片下方多一个站内入口）
+ *  - draft：true = 本项目先不上线（构建时跳过）。用于「过程笔记还是草稿」的项目
+ *    —— 卡片没处可跳，会 404，所以卡片得跟着一起压住
  */
 export const PROJECTS = [
+  {
+    name: '电子皮肤：柔性压力传感器',
+    desc: '两张柔性电路夹一片压感薄膜，按下去的地方电阻变小——压力就成了一幅图。',
+    tags: ['柔性传感', 'ESP32', '硬件'],
+    cover: 'images/post/e-skin-night.webp',
+    status: '原型 · 制作中',
+    note: 'e-skin',
+    draft: true,
+  },
   {
     name: '我马上来',
     url: 'https://thewindhind.github.io/im-coming/',

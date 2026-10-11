@@ -1,24 +1,30 @@
 ---
 /**
- * 项目卡片：整块点开就是项目本身的站点（新窗口）。
- * 数据来自 consts.ts 的 PROJECTS；如果那篇「过程笔记」也在站内，卡片下方再给一个站内入口。
+ * 项目卡片。
+ *  - 有 url：整块点开就是项目本身的站点（新窗口），meta 显示域名 + ↗
+ *  - 没 url（还在做 / 暂无站点）：整块点开走站内那篇「过程笔记」，meta 换成 status 文案
+ * 数据来自 consts.ts 的 PROJECTS。
  */
 import { mediaUrl } from '../lib/media';
 
 interface Props {
   project: {
     name: string;
-    url: string;
+    url?: string;
     desc?: string;
     tags?: string[];
     cover?: string;
+    status?: string;
     note?: string;
+    /** true = 先不上线（由页面在构建时过滤掉，见 posts/index.astro） */
+    draft?: boolean;
   };
 }
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const { project: p } = Astro.props;
 const cover = mediaUrl(p.cover);
 const host = (() => {
+  if (!p.url) return null;
   try {
     return new URL(p.url).host;
   } catch {
@@ -26,15 +32,26 @@ const host = (() => {
   }
 })();
 const noteHref = p.note ? `${B}/posts/${p.note}` : null;
+/** 外链优先；没有外链就整块指向站内笔记；两者都没有则不可点 */
+const href = p.url ?? noteHref;
+const isExt = Boolean(p.url);
+/** 整块已经指向笔记时，卡片下方就不再重复挂一个入口 */
+const showNote = Boolean(noteHref) && isExt;
+const Tag = href ? 'a' : 'div';
 ---
 
 <article class="project-card">
-  <a class="body" href={p.url} target="_blank" rel="noopener noreferrer">
+  <Tag
+    class="body"
+    href={href}
+    target={isExt ? '_blank' : undefined}
+    rel={isExt ? 'noopener noreferrer' : undefined}
+  >
     {cover && <span class="cover" aria-hidden="true" style={`--cover:url("${cover}")`}></span>}
     <div class="meta">
       <span class="kind">项目</span>
-      <span class="host">{host}</span>
-      <span class="ext" aria-hidden="true">↗</span>
+      {host ? <span class="host">{host}</span> : <span class="status">{p.status ?? '制作中'}</span>}
+      {isExt && <span class="ext" aria-hidden="true">↗</span>}
     </div>
     <h3>{p.name}</h3>
     {p.desc && <p class="desc">{p.desc}</p>}
@@ -47,9 +64,9 @@ const noteHref = p.note ? `${B}/posts/${p.note}` : null;
         </div>
       )
     }
-  </a>
+  </Tag>
 
-  {noteHref && <a class="note" href={noteHref}>站内过程笔记 →</a>}
+  {showNote && <a class="note" href={noteHref}>站内过程笔记 →</a>}
 
   <!-- 偷看的猫 -->
   <svg class="peek" viewBox="0 0 60 44" aria-hidden="true">
@@ -100,10 +117,16 @@ const noteHref = p.note ? `${B}/posts/${p.note}` : null;
     border-radius: 999px;
     letter-spacing: 0.1em;
   }
-  .host {
+  .host,
+  .status {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  /* 没有外链的项目：meta 里放状态文案而不是域名，别用 ↗ 误导成站外 */
+  .status {
+    color: var(--accent-2);
+    letter-spacing: 0.06em;
   }
   .ext {
     margin-left: auto;

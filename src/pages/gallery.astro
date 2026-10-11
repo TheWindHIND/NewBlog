@@ -10,7 +10,7 @@ import { getCollection } from 'astro:content';
 import { mediaUrl } from '../lib/media';
 
 const B = import.meta.env.BASE_URL.replace(/\/+$/, '');
-const items = (await getCollection('gallery')).sort(
+const items = (await getCollection('gallery', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
   (a, b) => (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0)
 );
 /** 展厅顺序固定下来，免得加一张图就打乱原来的排布 */

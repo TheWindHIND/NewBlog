@@ -18,9 +18,14 @@ const posts = defineCollection({
     /**
      * 插画明暗档：`auto` = 用主题默认的透明度/纱层；
      * `bright` = 亮色插画（整张发白那种）——夜主题下默认纱层会把它压到几乎看不见，
-     * 所以换一套「多露图、少压纱」的令牌。见 tokens.css 的 --post-bright-*。
+     * 所以换一套「多露图、少压纱」的令牌；`dark` = 很暗的插画——默认纱层下只剩一层黑，
+     * 也要少压纱。见 tokens.css 的 --post-bright-* / --post-dark-*。
      */
-    bgTone: z.enum(['auto', 'bright']).default('auto'),
+    bgTone: z.enum(['auto', 'bright', 'dark']).default('auto'),
+    /** 主题配对插画：芒（昼）主题时把页首插画整张换成这张（归档页那套昼夜两图的用法） */
+    bgDay: z.string().optional(),
+    /** 配对图的档位，缺省跟随 bgTone */
+    bgDayTone: z.enum(['auto', 'bright', 'dark']).optional(),
     description: z.string().optional(),
   }),
 });
@@ -32,6 +37,8 @@ const gallery = defineCollection({
     alt: z.string(),
     date: z.coerce.date().optional(),
     group: z.string().default('日常'),
+    /** true = 先不上线（构建时跳过），和文章一个口径 */
+    draft: z.boolean().default(false),
   }),
 });
 
