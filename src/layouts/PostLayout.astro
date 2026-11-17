@@ -29,7 +29,14 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 <BaseLayout title={d.title} description={d.description}>
   {/* 背景插画（页首一条渐隐的插画带）+ 上缘柔光纱：压住标题区又不留硬边
       —— frontmatter 写了 bg 就用本篇自己的图，否则用主题默认那张 */}
-  <PostBackdrop bg={d.bg} tone={d.bgTone} bgDay={d.bgDay} toneDay={d.bgDayTone} />
+  <PostBackdrop
+    bg={d.bg}
+    tone={d.bgTone}
+    bgDay={d.bgDay}
+    toneDay={d.bgDayTone}
+    position={d.bgPos}
+    positionDay={d.bgPosDay}
+  />
   <SwordProgress />
   <CurtainOpen
     title={d.title}
@@ -288,6 +295,15 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
     border-radius: var(--radius);
     margin-inline: auto;
     box-shadow: var(--shadow);
+  }
+  /* 正文里当“插图”用的单张画（如《肥鱼是》）：收窄 + 高度自动，
+     不铺满整栏才有画册感。⚠️ 靠 width/height 属性预留 CLS 的图必须补 height:auto */
+  .prose :global(img.poem-figure) {
+    display: block;
+    max-width: 520px;
+    width: 100%;
+    height: auto;
+    margin-block: 28px 8px;
   }
   .prose :global(blockquote) {
     margin-block: 1.2em;

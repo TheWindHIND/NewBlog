@@ -38,6 +38,8 @@ const JOBS = [
   // （雨丝 + 粒子噪点密，quality 压低一档，尺寸减半而肉眼看不出）
   { from: 'post/e-skin-night-src.jpg', to: 'images/post/e-skin-night.webp', preset: 'post', quality: 68 },
   { from: 'post/e-skin-day-src.jpg', to: 'images/post/e-skin-day.webp', preset: 'post', quality: 68 },
+  // 《肥鱼是》水彩插画（白底、1:1），文章封面 + 页首插画带共用
+  { from: 'post/fatfish-src.jpg', to: 'images/post/fatfish.webp', preset: 'post' },
   { from: 'links/lqy-site.jpg', to: 'images/links/lqy-site.webp', preset: 'card' },
   { from: 'links/lqy-avatar.jpg', to: 'images/links/lqy-avatar.webp', preset: 'avatar' },
 ];

@@ -14,9 +14,3 @@ node_modules/
 dist/
 .astro/
 raw-assets/
-
-# 《电子皮肤》项目还没参赛：正文与图库条目先只留本地，别进公开仓库
-# （比赛交完 → 删掉下面三行 + 去掉 frontmatter 里的 draft / consts.ts 里的项目 draft，再提交）
-src/content/posts/e-skin.md
-src/content/gallery/e-skin-night.md
-src/content/gallery/e-skin-day.md

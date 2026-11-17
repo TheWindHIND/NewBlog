@@ -26,6 +26,15 @@ const posts = defineCollection({
     bgDay: z.string().optional(),
     /** 配对图的档位，缺省跟随 bgTone */
     bgDayTone: z.enum(['auto', 'bright', 'dark']).optional(),
+    /**
+     * 插画取景（background-position）。方形 / 竖构图塞进宽插画带时，
+     * `cover` 会上下裁掉一大截、按默认取景正好把头切掉 → 这里手动往上提。
+     */
+    bgPos: z.string().optional(),
+    /** 配对图的取景，缺省跟随 bgPos */
+    bgPosDay: z.string().optional(),
+    /** 卡片封面带的取景（默认 center）。封面带只有 132px 高，方图同样要往上提。 */
+    coverPos: z.string().optional(),
     description: z.string().optional(),
   }),
 });

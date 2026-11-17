@@ -15,7 +15,13 @@ const cover = mediaUrl(d.cover);
 
 <article class="post-card">
   <a href={href}>
-    {cover && <span class="cover" aria-hidden="true" style={`--cover:url("${cover}")`}></span>}
+    {cover && (
+      <span
+        class="cover"
+        aria-hidden="true"
+        style={`--cover:url("${cover}")${d.coverPos ? `;--cover-pos:${d.coverPos}` : ''}`}
+      ></span>
+    )}
     <div class="meta">
       <time datetime={d.date.toISOString()}>
         {d.date.getFullYear()} 年 {d.date.getMonth() + 1} 月 {d.date.getDate()} 日
@@ -84,7 +90,7 @@ const cover = mediaUrl(d.cover);
     margin: -22px -22px 16px;
     background-image: var(--cover);
     background-size: cover;
-    background-position: center;
+    background-position: var(--cover-pos, center);
     background-repeat: no-repeat;
     transform-origin: 50% 20%;
     transition: transform 0.55s var(--ease-water);

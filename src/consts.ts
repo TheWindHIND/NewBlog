@@ -40,7 +40,6 @@ export const PROJECTS = [
     cover: 'images/post/e-skin-night.webp',
     status: '原型 · 制作中',
     note: 'e-skin',
-    draft: true,
   },
   {
     name: '我马上来',

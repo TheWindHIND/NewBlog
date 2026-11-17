@@ -45,8 +45,8 @@ const POS: Record<Tone, string> = { auto: '68% 30%', bright: '50% 46%', dark: '5
 const dayTone: Tone = toneDay ?? tone;
 const pos = position ?? POS[tone];
 const posDay = positionDay ?? position ?? POS[dayTone];
-const night = mediaUrl(bg);
-const day = mediaUrl(bgDay);
+const night = bg === 'none' ? undefined : mediaUrl(bg);
+const day = bgDay === 'none' ? undefined : mediaUrl(bgDay);
 
 /** 档位类名按主题分开写死（scoped 样式只认字面量，拼出来的类名不会被编译） */
 const themeCls = [
@@ -57,8 +57,10 @@ const themeCls = [
 const style = [
   `--post-bg-pos:${pos}`,
   `--post-day-bg-pos:${posDay}`,
-  night ? `--post-bg:url("${night}")` : '',
-  day ? `--post-day-bg:url("${day}")` : '',
+  // `bg: 'none'` = 这篇不要插画带。必须显式写 none 覆盖：不写的话会回落到
+  // tokens.css 里主题默认的 --post-bg（那张秋千少女），看起来像没生效。
+  bg === 'none' ? '--post-bg:none' : night ? `--post-bg:url("${night}")` : '',
+  bgDay === 'none' ? '--post-day-bg:none' : day ? `--post-day-bg:url("${day}")` : '',
 ]
   .filter(Boolean)
   .join(';');
