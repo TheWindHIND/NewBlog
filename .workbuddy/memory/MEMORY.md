@@ -3,9 +3,8 @@
 完整项目说明见资料库《藏枫的猫窝》交接说明书（源文件 `raw-assets/handoff.md`）。本文件只留「坑 + 铁律」。
 
 ## ⏰ 待办（到点主动提醒/执行）
-- **2026-10-15 之后**：用户科创比赛（《电子皮肤》）交完 → **主动提醒上传/放出该项目文章**。放出一键 = 删 `.gitignore` 里 e-skin 三行
-  + 去掉 `src/content/posts/e-skin.md`、`gallery/e-skin-{night,day}.md`、`consts.ts` PROJECTS 那条的 `draft`，再 build/push。
-  动手前先问用户「比赛是否已交完」。
+- （暂无）
+- 已完成：2026-11-17 用户确认比赛交完 → **《电子皮肤》已放出**（去掉文章/两条 gallery/项目卡四处的 `draft` + `.gitignore` 三行）。
 
 ## 站点
 `TheWindHIND/NewBlog` → https://thewindhind.github.io/NewBlog/ ；push main 触发 Actions 发布；全手写设计不上框架。
@@ -39,6 +38,11 @@
 - ⚠️ **`<img width height>` 是作者级 presentational hint**：只写 `width:100%` 覆盖不了高度 → 窄栏里图片纵向拉长。靠属性预留 CLS 的图，CSS 必须补 **`height:auto`**（要固定比例再加 `aspect-ratio`）。
 - ⚠️ **CSS 变量不跨兄弟节点**：给 `.post-bg`/`.post-veil` 这类兄弟元素配参数时，各自挂自己的变量。
 - ⚠️ 网格一律 `minmax(min(100%, Npx), 1fr)`：少了 `min(100%,…)` 护栏，窄屏列宽会被 Npx 撑出横向滚动。
+- ⚠️ **方图（1:1 / 竖构图）当插画**：`background-size: cover` 在 820px 高的页首带与 132px 高的卡片封面带里都会上下裁，
+  默认取景正好切头 → frontmatter 用 **`bgPos`**（插画带）/ **`coverPos`**（卡片封面）手动往上提（实测 `'50% 0%'` / `'50% 6%'`）。
+- ⚠️ **`bg: 'none'` = 这篇不要页首插画带**（否则回落到 tokens 里那张默认插画「秋千少女」）。组件里必须**显式内联 `--post-bg:none`**——
+  第一次踩坑：只把变量留空没写值，结果照样继承默认图，完全看不出效果。短诗/短篇用它，别让 820px 插画把正文压在人物脸上。
+  正文里当「插图」的单张画给 `class="poem-figure"`（PostLayout 里 520px 居中 + `height:auto`）。
 - **「今日一句」**：池 = `consts.ts` 的 `QUOTES[]`（现 20 句 ≈ 20 天一轮），公式 `index=(YYYY*372+(M+1)*31+D)%池长`（M 为 0-based）；**池长 = 周期**，取模天然循环、不会用尽。
   构建时渲染一条兜底 + Footer 内联 `#site-quotes` JSON，前端按**访客本地日期**重算。语气口径 = **戏剧化 + 自恋 + 一点藏起来的孤独**（舞台/帷幕/掌声/谢幕/甜点）；**别混进「喵」或温柔迎客的口吻**（那是芙芙猫/站主语气）。`.quote` 的 `max-width` 留 **640px**（30 字出头才不会把收尾「」挤第二行）。
   ⚠️ 该公式**不是严格每天 +1**：每月都按 31 天算 → 月内 +1，而「上个月不足 31 天」的月初会跳步（3/1 +4；5、7、10、12 月 1 日各 +2；跨年 +1），2026 年共 5 处。
@@ -62,12 +66,15 @@
 - 文章页 + 列表页共用 `PostBackdrop.astro`（`variant="list"` 换列表页令牌，`bg`/`tone`/`bgDay`/`toneDay` 单篇覆盖）：页首**渐隐插画带** `.post-bg`（`min(92vh,820px)`、mask 上淡入下淡出）+ `.post-veil`（纯 `var(--bg)` + mask 只压上缘）。⚠️ **别用「主题色→透明」渐变当纱**（sRGB 中段混灰）→ 一律 mask。
   令牌：`--post-img-o/--post-veil-o`（夜 .5/.86、昼 .34/.94）、列表 `--post-list-*`（夜 .66/.66、昼 .38/.9）、bright（夜 .62/.58、昼 .5/.42）、dark（夜 .82/.46、昼 .72/.52）。
   ⚠️ **取景按档位给默认值**（`POS={auto:'68% 30%',bright:'50% 46%',dark:'50% 42%'}`）：亮/暗档多是居中构图，沿用主题默认偏右取景会把主体推出画面。
-- 文章 frontmatter：`cover`（卡片封面带）、`bg`+`bgTone`（页首插画）、`bgDay`+`bgDayTone`（**昼夜各一张**）、`series`/`seriesIndex`。⚠️ **已删掉 `kind`**（项目不再由文章承担，别加回来）。
+- 文章 frontmatter：`cover`（卡片封面带）+ `coverPos`、`bg`+`bgTone`（页首插画，`bg: 'none'` 可整篇关掉）+ `bgPos`、`bgDay`+`bgDayTone`+`bgPosDay`（**昼夜各一张**）、`series`/`seriesIndex`。⚠️ **已删掉 `kind`**（项目不再由文章承担，别加回来）。
 - ⚠️ **亮色插画必须标 `bgTone: bright`**（夜主题默认纱会糊没）；⚠️ **很暗的插画要标 `bgTone: dark`**——dark 档**把图的淡出提前**（实心 12–22%、40% 收干净）：暗图压得住浅色字，但常带**亮主体**（人像/灯光），而页首引言正好在 25–40% 处，不提前收就把正文对比度顶掉。
   ⚠️ 文章标签行（`.tags`）压在插画上会发虚，**亮图档尤其明显（`白` 也一样）**：亮图纱只压到 30%，标签正好在边缘，chip 又是半透明强调色 —— 全站性质观感，不是单篇 bug。（待定：是否统一把 chip 不透明化。）
 - ⚠️ 列表页页首的「裸文字」（`.board-title`/`.board-sub`/`.year`）压在插画带上：给同底色柔光字影 `text-shadow: 0 1px 12px var(--bg), 0 1px 2px var(--bg)`（可继承）；`.board-sub` 用 `var(--text)` + `opacity:.72`（用 `--muted` 会在最亮墙面上糊掉）。
 - **「项目」= 作品墙，不是文章**：`consts.ts` 的 `PROJECTS[]` → `ProjectCard.astro`。有 `url` → 整块**外链**项目站点（meta 显域名 + ↗）；**没 `url`** → 整块跳站内过程笔记（同窗口，meta 显 `status` 文案如「原型 · 制作中」，不再重复挂 note 入口）。`note` = 站内笔记 slug。写法的来龙去脉一律当**普通文章**收进「杂谈」按年份归档。
 - ⚠️ **未发布内容的隔离**（未参赛的科创项目等）：文章 `draft: true`、图库条目 `draft`（gallery schema 同支持）、`PROJECTS` 那条也 `draft`（**笔记是草稿时项目卡必须一起压住**，否则卡片指向构建产物里不存在的页面 = 404），再把那几份 md 加进 `.gitignore`（公开仓库只靠 draft 挡不住源码）。当前挂着《电子皮肤》（`src/content/posts/e-skin.md` + 两条 gallery + `.gitignore` 三条 + 两处 draft），**见顶部待办**。
+- **Now 节目单**（`/now`）：数据全在 **`src/content/now/now.md`** 的 frontmatter（`now` collection 取第一份 md 的第一条）。
+  `playing/watching/listening` 都是 **`array(string)`**，**没有独立的作者/副标题字段** → 作者按站内惯例写进
+  **中文全角括号**（`逆流行（有棵里里）`）；改完内容记得同步 `updated`，页面页脚显示「上一版节目单更新于 …」。
 - 图片路径一律走 **`src/lib/media.ts` 的 `mediaUrl()`**：相对路径补 BASE_URL，`http(s)://`/`data:` 原样。
 - 友链 = `consts.ts` 的 `FRIENDS[]`（name/url/cover/avatar/desc）→ 关于页「**同台 · FELLOW ACTS**」区块。
 - 图库 = `src/content/gallery/*.md`（`src/alt/date/group`；`GROUP_ORDER`：站点视觉 / 站点插画 / **文章封面** / 文章插画 / 友链）。
